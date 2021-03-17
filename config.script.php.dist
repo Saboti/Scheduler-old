@@ -1,0 +1,13 @@
+<?php
+
+// This should point directly to the directory game.
+$game_path = '';
+
+// This should point to the directory where the Scheduler Folder  are located.
+$script_path = '';
+
+// This should point to the external url of the game.
+$game_url = '';
+
+ 
+?>
