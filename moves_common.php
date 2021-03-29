@@ -46,7 +46,7 @@ define('MV_COMBAT_LEVEL_PLANETARY', 1); // Attack of the planet (= Colonization)
 define('MV_COMBAT_LEVEL_ORBITAL', 2); // Attack on owned planet, but only ships
 define('MV_COMBAT_LEVEL_OUTER', 3); // Fight beyond the planet between foreign players (or attack by the owner)
 
-define('MV_COMBAT_BIN_PATH', $script_path . 'stfc-moves-combat/bin/moves_combat');
+define('MV_COMBAT_BIN_PATH', $script_path . 'Scheduler/bin/moves_combat');
 
 // defines form action27
 

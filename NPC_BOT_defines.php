@@ -39,7 +39,7 @@ define('INSTALL_LOG_FILE_NPC', $game_path.'logs/NPC_installation.log');
 define('PICK_RESOURCES_FROM_PLANET',1); // 1 = remove resources from BOT's planet
                                         // 0 = left BOT's planet untouched
 
-define('MALL_RESOURCES_AVAILABLE',0);   // 1 = resourses available at the Feregi's Mall
+define('MALL_RESOURCES_AVAILABLE',1);   // 1 = resourses available at the Feregi's Mall
                                         // 0 = no resources available
 
 

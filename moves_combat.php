@@ -490,7 +490,7 @@ commonlog('Moves [NewCombat]', 'shuffle data time: '.((time() + microtime()) - $
 $savetime = (time() + microtime());
 
 
-$file=fopen($script_path.'stgc-fightmodule/combat.data','w');
+$file=fopen($script_path.'Scheduler/combat.data','w');
 //$file2=fopen('fight_'.$move_id.'.data','w');
 foreach ($ships as $key => $ship)
 {
@@ -521,7 +521,7 @@ commonlog('Moves [NewCombat]', 'transmit data time: '.((time() + microtime()) - 
 $cppstarttime = (time() + microtime());
 
 
-exec($script_path.'stgc-fightmodule/newfight',$data);
+exec($script_path.'Scheduler/newfight',$data);
 commonlog('Moves [NewCombat]', 'C++ calculation time: '.((time() + microtime()) - $cppstarttime), $move_id);
 commonlog('Moves [NewCombat]', $data[1].' has won!', $move_id);
 
