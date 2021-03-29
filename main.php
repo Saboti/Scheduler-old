@@ -1069,7 +1069,7 @@ while($planet = $db->fetchrow($q_planets)) {
             switch($user['language'])
             {
                 case 'GER':
-                    $log_title = 'Revolution auf Planet '.$planet['planet_name'];
+                    $log_title = 'Aufst&auml;nde auf Planet '.$planet['planet_name'];
                 break;
                 case 'ITA':
                     $log_title = 'Rivoluzione sul pianeta '.$planet['planet_name'];

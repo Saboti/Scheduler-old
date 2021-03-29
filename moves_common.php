@@ -862,7 +862,7 @@ $this->log(MV_M_NOTICE,'AR-query:<br>"'.$sql.'"<br>');
                 switch($this->move['language'])
                 {
                     case 'GER':
-                        $log_title1 = 'AR-Flottenverband hat Schiffe bei '.$this->dest['planet_name'].' angegriffen';
+                        $log_title1 = 'Alarmstufe Rot Flottenverband hat Schiffe bei '.$this->dest['planet_name'].' angegriffen';
                         $log_title2 = 'Flottenverband wurde bei '.$this->dest['planet_name'].' angegriffen';
                     break;
                     case 'ITA':
@@ -979,7 +979,7 @@ $this->log(MV_M_NOTICE,'AY-user(s): <b>'.count($ay_user).'</b>');
                         switch($ay_user[$i][1])
                         {
                             case 'GER':
-                                $log_title = 'AY-fleet reporting the arrival of a fleet on planet '.$this->dest['planet_name'];
+                                $log_title = 'Alarmstufe Gelb Flottenverband meldet die Ankunft von Schiffen bei dem Planeten '.$this->dest['planet_name'];
                                 break;
                             case 'ITA':
                                 $log_title = 'Flotta in AG comunica arrivo di navi sul pianeta '.$this->dest['planet_name'];

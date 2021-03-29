@@ -83,7 +83,7 @@ while (($player_data=$db->fetchrow($userqry))==true)
 		switch($player_data['language'])
 		{
 			case 'GER':
-				$user_race='Föderation';
+				$user_race='F&ouml;deration';
 			break;
 			case 'ITA':
 				$user_race='Federazione';

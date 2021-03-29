@@ -774,7 +774,7 @@ if($this->cmb[MV_CMB_WINNER] == MV_CMB_ATTACKER) {
                         switch($res_item['language'])
                         {
                             case 'GER':
-                                $log_title = 'Automatic distress message from ';
+                                $log_title = 'Automatischer Hilferuf von der Kolonie ';
                             break;
                             case 'ITA':
                                 $log_title = 'Richiesta automatica di soccorso dalla colonia ';

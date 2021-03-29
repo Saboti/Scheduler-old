@@ -176,7 +176,7 @@ class moves_action_23 extends moves_common {
         switch($this->move['language'])
         {
             case 'GER':
-                $log_title1 = 'Flottenverband '.$this->dest['user_name'].' übergeben';
+                $log_title1 = 'Flottenverband '.$this->dest['user_name'].' &uuml;bergeben';
             break;
             case 'ITA':
                 $log_title1 = 'Associazione flotta consegnata a '.$this->dest['user_name'];

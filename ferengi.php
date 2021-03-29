@@ -370,7 +370,7 @@ class Ferengi extends NPC
                     switch($tradedata['language'])
                     {
                         case 'GER':
-                            $log_title = 'Auktion benachrichtigung (Erfolgslos)';
+                            $log_title = 'Auktions Benachrichtigung (Erfolgslos)';
                         break;
                         case 'ENG':
                             $log_title = 'Auction notification (no success)';
@@ -467,7 +467,7 @@ class Ferengi extends NPC
                     switch($tradedata['language'])
                     {
                         case 'GER':
-                            $log_title = 'Auktion benachrichtigung (Verkauft)';
+                            $log_title = 'Auktions Benachrichtigung (Verkauft)';
                         break;
                         case 'ENG':
                             $log_title = 'Auction notification (sold)';
@@ -503,7 +503,7 @@ class Ferengi extends NPC
                     switch($purchaser['language'])
                     {
                         case 'GER':
-                            $log_title = 'Auktion benachrichtigung (Gekauft)';
+                            $log_title = 'Auktions Benachrichtigung (Gekauft)';
                         break;
                         case 'ENG':
                             $log_title = 'Auction notification (bought)';

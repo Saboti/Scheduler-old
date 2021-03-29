@@ -244,7 +244,7 @@ class moves_action_34 extends moves_common {
             switch($this->move['language'])
             {
                 case 'GER':
-                    $message='Hallo '.$this->move['user_name'].',<br>Handelswege zwischen Sitter und sitted Konto sind verboten.<br>Diese Nachricht wurde automatisch generiert, Beschwerden beim STFC2-Team bringen nichts.<br>~ Sitting-Abuse-Automatik';
+                    $message='Hallo '.$this->move['user_name'].',<br>Handelswege zwischen Sitter und gesitteten Konto sind verboten.<br>Diese Nachricht wurde automatisch generiert, Beschwerden beim STGW-Team bringen nichts.<br>~ Sitting-Abuse-Automatik';
                     $title='Routesperre';
                 break;
                 case 'ITA':
@@ -252,7 +252,7 @@ class moves_action_34 extends moves_common {
                     $title='Rotta bloccata';
                 break;
                 default:
-                    $message='Hello '.$this->move['user_name'].',<br>trade routes between sitter and sitted account are forbidden.<br>This message is automatically generated complaints to the team STFC2 are useless.<br>~Sitting Abuse Prevention System';
+                    $message='Hello '.$this->move['user_name'].',<br>trade routes between sitter and sitted account are forbidden.<br>This message is automatically generated complaints to the team STGW are useless.<br>~Sitting Abuse Prevention System';
                     $title='Route blocked';
                 break;
             }
@@ -267,7 +267,7 @@ class moves_action_34 extends moves_common {
             switch($this->move['language'])
             {
                 case 'GER':
-                    $message='Hallo '.$this->move['user_name'].',<br>Handelswege mit Siedler sind verboten.<br>Diese Nachricht wurde automatisch generiert, Beschwerden beim STFC2-Team bringen nichts.<br>~ Siedler-Abuse-Automatik';
+                    $message='Hallo '.$this->move['user_name'].',<br>Handelswege mit Siedler sind verboten.<br>Diese Nachricht wurde automatisch generiert, Beschwerden beim STGE-Team bringen nichts.<br>~ Siedler-Abuse-Automatik';
                     $title='Routesperre';
                 break;
                 case 'ITA':

@@ -665,9 +665,9 @@ class moves_action_27 extends moves_common {
                 switch($this->move['language'])
                 {
                     case 'GER':
-                        $f_c_title = 'First contact on ';
-                        $f_c_fail = ' failed';
-                        $f_c_success = ' done';
+                        $f_c_title = 'Erster Kontakt am ';
+                        $f_c_fail = ' gescheitert';
+                        $f_c_success = ' erfolgreich';
                     break;
                     case 'ITA':
                         $f_c_title = 'Primo contatto su ';
@@ -774,9 +774,9 @@ class moves_action_27 extends moves_common {
             case 1:
                 switch($this->move['language'])	{
                     case 'GER':
-                        $f_c_title = 'Recon mission on ';
-                        $f_c_fail = ' failed';
-                        $f_c_success = ' done';
+                        $f_c_title = 'Aufkl&auml;rungsmission auf ';
+                        $f_c_fail = ' fehlgeschlagen';
+                        $f_c_success = ' erfolgreich';
                     break;
                     case 'ITA':
                         $f_c_title = 'Ricognizione su ';
@@ -943,9 +943,9 @@ class moves_action_27 extends moves_common {
                 switch($this->move['language'])
                 {
                     case 'GER':
-                        $f_c_title = 'Diplo Speech on ';
-                        $f_c_fail = ' failed';
-                        $f_c_success = ' done';
+                        $f_c_title = 'Diplomatische Verhandlungen auf ';
+                        $f_c_fail = ' gescheitert';
+                        $f_c_success = ' erfolgreich';
                     break;
                     case 'ITA':
                         $f_c_title = 'Trattative Diplomatiche su ';
@@ -1052,9 +1052,9 @@ class moves_action_27 extends moves_common {
                 switch($this->move['language'])
                 {
                     case 'GER':
-                        $f_c_title = 'Tech Support on ';
-                        $f_c_fail = ' failed';
-                        $f_c_success = ' succesful';
+                        $f_c_title = 'Technologische Unterst&uuml;tzung auf ';
+                        $f_c_fail = 'nicht vorgesehen';
+                        $f_c_success = ' erfolgreich geliefert';
                     break;
                     case 'ITA':
                         $f_c_title = 'Supporto tecnologico su ';
@@ -1102,7 +1102,7 @@ class moves_action_27 extends moves_common {
                         switch($this->move['language'])
                         {
                             case 'GER':
-                                $log_data[7] = '<b>Environmental modification</b>';
+                                $log_data[7] = '<b>Umgebungsmodifikation</b>';
                             break;
                             case 'ITA':
                                 $log_data[7] = '<b>Modifica ambientale</b>';
@@ -1117,7 +1117,7 @@ class moves_action_27 extends moves_common {
                         switch($this->move['language'])
                         {
                             case 'GER':
-                                $log_data[7] = '<b>Medical research</b>';
+                                $log_data[7] = '<b>Medizinische Forschung</b>';
                             break;
                             case 'ITA':
                                 $log_data[7] = '<b>Ricerca medica</b>';
@@ -1132,7 +1132,7 @@ class moves_action_27 extends moves_common {
                         switch($this->move['language'])
                         {
                             case 'GER':
-                                $log_data[7] = '<b>Defenses upgrade</b>';
+                                $log_data[7] = '<b>Verteidigungs Verbesserung</b>';
                             break;
                             case 'ITA':
                                 $log_data[7] = '<b>Aggiornamento difese</b>';
@@ -1162,7 +1162,7 @@ class moves_action_27 extends moves_common {
                         switch($this->move['language'])
                         {
                             case 'GER':
-                                $log_data[7] = '<b>Mining</b>';
+                                $log_data[7] = '<b>Bergbau</b>';
                             break;
                             case 'ITA':
                                 $log_data[7] = '<b>Estrazione</b>';
@@ -1280,9 +1280,9 @@ class moves_action_27 extends moves_common {
                 switch($this->move['language'])
                 {
                     case 'GER':
-                        $f_c_title = 'Orbital defense building on ';
-                        $f_c_fail = ' not done';
-                        $f_c_success = ' done';
+                        $f_c_title = 'Aufbau von Orbitalverteidigungen auf ';
+                        $f_c_fail = ' nicht vollst&auml;ndig';
+                        $f_c_success = ' abgeschlossen';
                     break;
                     case 'ITA':
                         $f_c_title = 'Costruzione difese orbitali su ';
@@ -1413,9 +1413,9 @@ class moves_action_27 extends moves_common {
                 switch($this->move['language'])
                 {
                     case 'GER':
-                        $f_c_title = 'Rescue mission on ';
-                        $f_c_fail = ' not done';
-                        $f_c_success = ' done';
+                        $f_c_title = 'Rettunsmission auf ';
+                        $f_c_fail = ' nicht erfolgreich';
+                        $f_c_success = ' erfolgreich';
                     break;
                     case 'ITA':
                         $f_c_title = 'Missione di recupero su ';
@@ -1523,9 +1523,9 @@ class moves_action_27 extends moves_common {
                 switch($this->move['language'])
                 {
                     case 'GER':
-                        $f_c_title = 'AT deploy on ';
-                        $f_c_fail = ' not done';
-                        $f_c_success = ' done';
+                        $f_c_title = 'Außenteam gelandet auf ';
+                        $f_c_fail = ' nicht erfolgreich';
+                        $f_c_success = ' erfolgreich';
                     break;
                     case 'ITA':
                         $f_c_title = 'Sbarco della squadra su ';
@@ -1648,7 +1648,7 @@ class moves_action_27 extends moves_common {
             switch($this->move['language'])
             {
                 case 'GER':
-                    $log_title = 'Priority message from ';
+                    $log_title = 'Vorrangige Kommunikation von der Kolonie ';
                 break;
                 case 'ITA':
                     $log_title = 'Comunicazione prioritaria dalla colonia ';

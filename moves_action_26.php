@@ -155,9 +155,9 @@ class moves_action_26 extends moves_common {
 		switch($this->move['language'])
 		{
 			case 'GER':
-				$log_title = 'Exploration of planet class '.strtoupper($survey_data['planet_type']).', '.$survey_data['system_name'];
-				$log_msg1 = 'Forschungs-Verh&auml;ltnis vom Schiff';
-				$log_msg2 = 'Geologische Erforschung- und Verwandt&uuml;bersichten zum Kategorienplaneten';
+				$log_title = 'Analyse des Planeten der Klasse '.strtoupper($survey_data['planet_type']).', '.$survey_data['system_name'];
+				$log_msg1 = 'Analyse Bericht vom Schiff';
+				$log_msg2 = 'Geologische Erkundung und Analyse im Bezug auf den Planeten der Klasse';
 			break;
 			case 'ITA':
 				$log_title = 'Esplorazione pianeta classe '.strtoupper($survey_data['planet_type']).', '.$survey_data['system_name'];

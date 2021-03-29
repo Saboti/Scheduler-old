@@ -110,7 +110,7 @@ else {
                 if ($val<0.8) $text='stark &uuml;berm&auml;&szlig;ig gesittet';
                 if ($val<0.6) $text='&Uuml;berm&auml;&szlig;ig gesittet';
                 if ($val<0.45) $text='etwas zuviel gesittet';
-                $message='Hallo '.$user['user_name'].',<br>dein Account kann <b>ab jetzt</b> f&uuml;r <b>einen Tag</b> nicht gesittet werden, weil er innerhalb der letzten 24 Stunden <b>'.$text.'</b> wurde.<br>Diese Nachricht wurde automatisch generiert, Beschwerden beim STFC2-Team bringen nichts.<br>~ Sitting-Abuse-Automatik';
+                $message='Hallo '.$user['user_name'].',<br>dein Account kann <b>ab jetzt</b> f&uuml;r <b>einen Tag</b> nicht gesittet werden, weil er innerhalb der letzten 24 Stunden <b>'.$text.'</b> wurde.<br>Diese Nachricht wurde automatisch generiert, Beschwerden beim STGW-Team bringen nichts.<br>~ Sitting-Abuse-Automatik';
                 $title='Sittingsperre';
             break;
             case 'ITA':
