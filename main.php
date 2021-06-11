@@ -27,6 +27,7 @@
 
 // include game definitions, path url and so on
 include('config.script.php');
+include($game_path . 'include/sql.php');
 
 error_reporting(E_ERROR);
 ini_set('memory_limit', '200M');
