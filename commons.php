@@ -261,13 +261,15 @@ class scheduler {
 
 		$this->log('<font color=#0000ff>Starting <b>'.$name.'</b>...</font>',$file);
 
-		$this->start_values[$name] = array( time() + microtime() , $db->i_query );
+		//$this->start_values[$name] = array( time() + microtime() , $db->i_query );
+		$this->start_values[$name] = array( microtime(true) , $db->i_query );
 	}
 
 	function finish_job($name,$file = '') {
 		global $db;
 
-		$this->log('<font color=#0000ff>Executed <b>'.$name.'</b> (</font><font color=#ff0000>queries: '.($db->i_query - $this->start_values[$name][1]).'</font><font color=#0000ff>) in </font><font color=#009900>'.round( (time() + microtime()) - $this->start_values[$name][0] , 4).' secs</font><br>',$file);
+		//$this->log('<font color=#0000ff>Executed <b>'.$name.'</b> (</font><font color=#ff0000>queries: '.($db->i_query - $this->start_values[$name][1]).'</font><font color=#0000ff>) in </font><font color=#009900>'.round( (time() + microtime()) - $this->start_values[$name][0] , 4).' secs</font><br>',$file);
+		$this->log('<font color=#0000ff>Executed <b>'.$name.'</b> (</font><font color=#ff0000>queries: '.($db->i_query - $this->start_values[$name][1]).'</font><font color=#0000ff>) in </font><font color=#009900>'.round( (microtime(true)) - $this->start_values[$name][0] , 4).' secs</font><br>',$file);
 
 	}
 }

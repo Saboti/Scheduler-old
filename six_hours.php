@@ -53,6 +53,7 @@ include('NPC_BOT.php');
 
 $starttime = ( microtime() + time() );
 
+include($game_path . 'include/sql.php');
 include($game_path . 'include/global.php');
 include($game_path . 'include/functions.php');
 include($game_path . 'include/text_races.php');
