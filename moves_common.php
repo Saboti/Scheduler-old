@@ -604,7 +604,7 @@ class moves_common {
     }
 
     function _main() {
-        $start_processing_time = time() + microtime();
+        $start_processing_time = microtime(true);
 
         // #############################################################################
         // On...
@@ -1072,7 +1072,7 @@ $this->log(MV_M_NOTICE,'AY-user(s): <b>'.count($ay_user).'</b>');
         // #############################################################################
         // Clean-Up
 
-        $total_processing_time = round( (time() + microtime()) - $start_processing_time, 4);
+        $total_processing_time = round( (microtime(true)) - $start_processing_time, 4);
 
         if($this->flags['keep_move_alive']) {
             $sql = 'UPDATE scheduler_shipmovement

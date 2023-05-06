@@ -50,7 +50,7 @@ if(!empty($_SERVER['SERVER_SOFTWARE'])) {
 // #######################################################################################
 // Init
 
-$starttime = ( microtime() + time() );
+$starttime = ( microtime(true) );
 
 // create logging facility
 $sdl = new scheduler();
@@ -336,7 +336,7 @@ if ($today['mday'] == 1) {
 // Quit and close log
 
 $db->close();
-$sdl->log('<b>Finished Daily script in <font color=#009900>'.round((microtime()+time())-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
+$sdl->log('<b>Finished Daily script in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
 
 
 ?>

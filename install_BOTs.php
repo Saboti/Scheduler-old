@@ -54,7 +54,7 @@ if(!empty($_SERVER['SERVER_SOFTWARE'])) {
 // ########################################################################################
 // Init
 
-$starttime = ( microtime() + time() );
+$starttime = ( microtime(true) );
 
 $sdl = new scheduler();
 
@@ -87,7 +87,7 @@ $settlers->Install();
 
 $db->close();
 
-$sdl->log('<b>Finished Install BOTs in <font color=#009900>'.round((microtime()+time())-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>',
+$sdl->log('<b>Finished Install BOTs in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>',
     INSTALL_LOG_FILE_NPC);
 
 ?>

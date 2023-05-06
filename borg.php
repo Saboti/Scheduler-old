@@ -562,7 +562,7 @@ class Borg extends NPC
 	{
         global $ACTUAL_TICK,$FUTURE_SHIP;
 
-		$starttime = ( microtime() + time() );
+		$starttime = ( microtime(true) );
 
 		// Read debug config
 		if($debug_data = $this->db->queryrow('SELECT * FROM borg_debug LIMIT 0,1'))
@@ -966,7 +966,7 @@ $this->sdl->start_job('Fleet Action Program - BETA -', TICK_LOG_FILE_NPC_BORG);
                     $this->sdl->log('DEBUG:BORG_1: Is now acting fleet '.$fleet_to_serve['fleet_id'].': '.$fleet_to_serve['fleet_name'], TICK_LOG_FILE_NPC_BORG );
                     // Controllo status flotta
 
-                    $sql = 'SELECT ship_id, unit_1, unit_2, unit_3, unit_4, hitpoints, value_5
+                    $sql = 'SELECT ship_id, unit_1, unit_2, unit_3, unit_4, hitpoints, value_5,
                                    max_unit_1, max_unit_2, max_unit_3, max_unit_4, max_torp
                                    FROM ships
                                    INNER JOIN ship_templates ON ship_templates.id = ships.template_id
@@ -1315,7 +1315,7 @@ $this->sdl->finish_job('Fleet Action Program - BETA -', TICK_LOG_FILE_NPC_BORG);
 
 
 
-		$this->sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime()+time())-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$this->db->i_query.'</font></b>', TICK_LOG_FILE_NPC_BORG);
+		$this->sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$this->db->i_query.'</font></b>', TICK_LOG_FILE_NPC_BORG);
 	}
 
 	function SendBorgFleet($ACTUAL_TICK,$fleet_id,$dest,$action = 46) {

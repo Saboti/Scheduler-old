@@ -252,7 +252,7 @@ class Ferengi extends NPC
     {
         global $sdl,$ACTUAL_TICK,$STARDATE;
 
-        $starttime = ( microtime() + time() );
+        $starttime = ( microtime(true) );
         $debug_array_logen=0;
         $debug_sql_logen=0;
         /*if($debug_zu= $this->db->queryrow('SELECT debug,sql,array,style FROM FHB_debug LIMIT 0,1'))
@@ -1643,7 +1643,7 @@ class Ferengi extends NPC
         // ########################################################################################
         // ########################################################################################
 
-        $this->sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime()+time())-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$this->db->i_query.'</font></b>', TICK_LOG_FILE_NPC_FERENGI);
+        $this->sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$this->db->i_query.'</font></b>', TICK_LOG_FILE_NPC_FERENGI);
     }
 
     function graph_draw($kind)

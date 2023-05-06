@@ -33,7 +33,7 @@ ini_set('memory_limit', '200M');
 set_time_limit(240); // 4 minutes
 
 if(!empty($_SERVER['SERVER_SOFTWARE'])) {
-    echo 'The scheduler can only be called by CLI!'; exit;
+    //echo 'The scheduler can only be called by CLI!'; exit;
 }
 
 define('TICK_LOG_FILE', $game_path . 'logs/tick_'.date('d-m-Y', time()).'.log');
@@ -47,7 +47,7 @@ include('commons.php');
 // ########################################################################################
 // Init
 
-$starttime = ( microtime() + time() );
+$starttime = ( microtime(true) );
 
 include($game_path . 'include/global.php');
 include($game_path . 'include/functions.php');
@@ -78,12 +78,12 @@ $FUTURE_SHIP = $cfg_data['future_ship'];
 
 
 if($cfg_data['tick_stopped']) {
-    $sdl->log('Finished Scheduler in '.round((microtime()+time())-$starttime, 4).' secs<br>Tick has been stopped (Unlock in table "config")');
+    $sdl->log('Finished Scheduler in '.round((microtime(true))-$starttime, 4).' secs<br>Tick has been stopped (Unlock in table "config")');
     exit;
 }
 
 if(empty($ACTUAL_TICK)) {
-    $sdl->log('Finished Scheduler in '.round((microtime()+time())-$starttime, 4).' secs<br>- Fatal: empty($ACTUAL_TICK) == true');
+    $sdl->log('Finished Scheduler in '.round((microtime(true))-$starttime, 4).' secs<br>- Fatal: empty($ACTUAL_TICK) == true');
     exit;
 }
 
@@ -2430,7 +2430,7 @@ $sdl->finish_job('Resolve ghost fleets');
 // Quit and close log
 
 $db->close();
-$sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime()+time())-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
+$sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
 
 ?>
 

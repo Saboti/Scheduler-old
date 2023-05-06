@@ -210,7 +210,7 @@ class Settlers extends NPC
     public function Execute($debug=0)
     {
         global $ACTUAL_TICK,$cfg_data,$RACE_DATA;
-        $starttime = ( microtime() + time() );
+        $starttime = ( microtime(true) + time() );
 
         $this->sdl->log('<br><b>-------------------------------------------------------------</b><br>'.
             '<b>Starting Settlers Bot Scheduler at '.date('d.m.y H:i:s', time()).'</b>', TICK_LOG_FILE_NPC_SETTLERS);
@@ -1009,7 +1009,7 @@ class Settlers extends NPC
         // ########################################################################################
         // ########################################################################################
 
-        $this->sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime()+time())-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$this->db->i_query.'</font></b>', TICK_LOG_FILE_NPC_SETTLERS);
+        $this->sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$this->db->i_query.'</font></b>', TICK_LOG_FILE_NPC_SETTLERS);
     }
 }
 
