@@ -1,4 +1,5 @@
 <?php
+error_reporting(E_ALL);
 /*	
 	This file is part of STFC.
 	Copyright 2006-2007 by Michael Krauss (info@stfc2.de) and Tobias Gafner
@@ -249,11 +250,22 @@ class scheduler {
 
 	function log($message,$file = '') {
 		if($file=='')
-			$fp = fopen(TICK_LOG_FILE, 'a');
-		else
-			$fp = fopen($file, 'a');
-		fwrite($fp, $message."<br>\n");
-		fclose($fp);
+		{
+			$file = TICK_LOG_FILE;
+		}
+						
+		$fp = fopen($file, 'a');
+		
+		if ( !$fp ) 
+		{
+			echo 'last error: ';
+			var_dump(error_get_last());
+		}
+		else 
+		{
+			fwrite($fp, $message."<br>\n");
+			fclose($fp);
+		}
 	}
 
 	function start_job($name,$file = '') {

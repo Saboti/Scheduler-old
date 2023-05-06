@@ -55,6 +55,7 @@ include($game_path . 'include/text_races.php');
 include($game_path . 'include/race_data.php');
 include($game_path . 'include/ship_data.php');
 include($game_path . 'include/libs/moves.php');
+include($game_path . 'include/sql.php');
 
 $sdl = new scheduler();
 $db = new sql($config['server'].":".$config['port'], $config['game_database'], $config['user'], $config['password']); // create sql-object for db-connection

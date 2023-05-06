@@ -127,7 +127,7 @@ class moves_common {
     var $cmb = array();
 
 
-    function moves_common(&$db, &$cur_move, $CURRENT_TICK) {
+    function __construct(&$db, &$cur_move, $CURRENT_TICK) {
         $this->db = $db;
 
         $this->move = $cur_move;

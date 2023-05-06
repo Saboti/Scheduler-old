@@ -264,14 +264,14 @@ class Ferengi extends NPC
         }*/
 
         $this->sdl->log('<br><b>-------------------------------------------------------------</b><br>'.
-            '<b>Starting Bot Scheduler at '.date('d.m.y H:i:s', time()).'</b>', TICK_LOG_FILE_NPC);
+            '<b>Starting Bot Scheduler at '.date('d.m.y H:i:s', time()).'</b>', TICK_LOG_FILE_NPC_FERENGI);
 
         // We need some info to allow the BOT to live
         $this->bot = $this->db->queryrow('SELECT * FROM FHB_Bot LIMIT 0,1');
         if($this->bot)
-            $this->sdl->log("The conversation with Ramona begins, oh, it is not beautiful, and then, it has such a great personality", TICK_LOG_FILE_NPC);
+            $this->sdl->log("The conversation with Ramona begins, oh, it is not beautiful, and then, it has such a great personality", TICK_LOG_FILE_NPC_FERENGI);
         else {
-            $this->sdl->log('<b>Error:</b> No access to the bot table - ABORTED', TICK_LOG_FILE_NPC);
+            $this->sdl->log('<b>Error:</b> No access to the bot table - ABORTED', TICK_LOG_FILE_NPC_FERENGI);
             return;
         }
 
@@ -324,20 +324,20 @@ class Ferengi extends NPC
             '<b>Antwort auf ihr Schreiben</b>',
             '<b>Risposta alla sua lettera</b>');
 
-        $this->ReplyToUser($titles,$messages);
+        $this->ReplyToUser($titles, $messages, TICK_LOG_FILE_NPC_FERENGI);
 
         // ########################################################################################
         // ########################################################################################
         // Shiptrade Scheduler
         // So, in order, the troops will have to be paid really well, now it just needs to be made​safe, Tap
-        $this->sdl->start_job('Shiptrade Scheduler', TICK_LOG_FILE_NPC);
+        $this->sdl->start_job('Shiptrade Scheduler', TICK_LOG_FILE_NPC_FERENGI);
 
         $sql = 'SELECT s.*,u.user_name,u.num_auctions,u.language,COUNT(b.id) AS num_bids FROM (ship_trade s)
                 LEFT JOIN (user u) ON u.user_id=s.user
                 LEFT JOIN (bidding b) ON b.trade_id=s.id
                 WHERE s.scheduler_processed = 0 AND s.end_time <='.$ACTUAL_TICK.' GROUP BY s.id';
         if(($q_strade = $this->db->query($sql)) === false) {
-            $this->sdl->log('<b>Error:</b> cannot query scheduler shiptrade data! - CONTINUED', TICK_LOG_FILE_NPC);
+            $this->sdl->log('<b>Error:</b> cannot query scheduler shiptrade data! - CONTINUED', TICK_LOG_FILE_NPC_FERENGI);
         }
         else
         {
@@ -347,7 +347,7 @@ class Ferengi extends NPC
                 // Check if auction had no bids
                 if ($tradedata['num_bids']<1)
                 {
-                    $this->sdl->log('<i>Notice:</i> shiptrade['.$tradedata['id'].'] had no bids', TICK_LOG_FILE_NPC);
+                    $this->sdl->log('<i>Notice:</i> shiptrade['.$tradedata['id'].'] had no bids', TICK_LOG_FILE_NPC_FERENGI);
 
                     // Vendor:
                     $log_data=array(
@@ -383,16 +383,16 @@ class Ferengi extends NPC
                     }
 
                     if(!add_logbook_entry($tradedata['user'], LOGBOOK_AUCTION_VENDOR, $log_title, $log_data))
-                        $this->sdl->log('<b>Error:</b> Logbook could not be written - '.$tradedata['user'], TICK_LOG_FILE_NPC);;
+                        $this->sdl->log('<b>Error:</b> Logbook could not be written - '.$tradedata['user'], TICK_LOG_FILE_NPC_FERENGI);;
 
                     // Unlock the auctioned ship
                     if ($this->db->query('UPDATE ships SET ship_untouchable=0 WHERE ship_id='.$tradedata['ship_id'])!=true)
                         $this->sdl->log('<b>CRITICAL ERROR</b>: shiptrade['.$tradedata['id'].']: failed to free ship['.$tradedata['ship_id'].']! - CONTINUED',
-                            TICK_LOG_FILE_NPC);
+                            TICK_LOG_FILE_NPC_FERENGI);
                 }
                 else
                 {
-                    $this->sdl->log('Trade id: '.$tradedata['id'].' ended successfully', TICK_LOG_FILE_NPC);
+                    $this->sdl->log('Trade id: '.$tradedata['id'].' ended successfully', TICK_LOG_FILE_NPC_FERENGI);
 
                     // Retrieve higher bidder
                     $sql = 'SELECT b.*,u.user_id,u.user_name,u.language
@@ -427,7 +427,7 @@ class Ferengi extends NPC
                                 ORDER BY max_bid DESC LIMIT 1';
                         $last_bid=$this->db->queryrow($sql);
 
-                        $this->sdl->log('Last Bid: '.$last_bid['max_bid'].' and Prelast Bid: '.$prelast_bid['max_bid'], TICK_LOG_FILE_NPC);
+                        $this->sdl->log('Last Bid: '.$last_bid['max_bid'].' and Prelast Bid: '.$prelast_bid['max_bid'], TICK_LOG_FILE_NPC_FERENGI);
 
                         // If last two bids are differents there isn't a tie then max_bid +1
                         if ($last_bid['max_bid']!=$prelast_bid['max_bid']) {
@@ -480,7 +480,7 @@ class Ferengi extends NPC
                     }
 
                     if(!add_logbook_entry($tradedata['user'], LOGBOOK_AUCTION_VENDOR, $log_title, $log_data))
-                        $this->sdl->log('<b>Error:</b> Logbook could not be written - '.$tradedata['user'], TICK_LOG_FILE_NPC);;
+                        $this->sdl->log('<b>Error:</b> Logbook could not be written - '.$tradedata['user'], TICK_LOG_FILE_NPC_FERENGI);;
 
                     // Purchaser:
                     $log_data=array(
@@ -516,9 +516,9 @@ class Ferengi extends NPC
                     }
 
                     if(!add_logbook_entry($purchaser['user_id'], LOGBOOK_AUCTION_PURCHASER, $log_title, $log_data))
-                        $this->sdl->log('<b>Error:</b> Logbook could not be written - '.$purchaser['user_id'], TICK_LOG_FILE_NPC);
+                        $this->sdl->log('<b>Error:</b> Logbook could not be written - '.$purchaser['user_id'], TICK_LOG_FILE_NPC_FERENGI);
 
-                    $this->sdl->log('Bidder ID: '.$purchaser['user_id'].' and Seller ID: '.$tradedata['user'], TICK_LOG_FILE_NPC);
+                    $this->sdl->log('Bidder ID: '.$purchaser['user_id'].' and Seller ID: '.$tradedata['user'], TICK_LOG_FILE_NPC_FERENGI);
 
                     // Insert payment request for purchase user
                     $sql = 'INSERT INTO schulden_table (user_ver,user_kauf,ship_id,
@@ -535,17 +535,17 @@ class Ferengi extends NPC
                     if(!$this->db->query($sql))
                     {
                         $this->sdl->log('<b>CRITICAL ERROR:</b> debts were not saved: "'.$sql.'" -  CONTINUED',
-                            TICK_LOG_FILE_NPC);
+                            TICK_LOG_FILE_NPC_FERENGI);
                     }else{
                         $code=$this->db->insert_id();
 
-                        $this->sdl->log('Payment request inserted [Code]: '.$code, TICK_LOG_FILE_NPC);
+                        $this->sdl->log('Payment request inserted [Code]: '.$code, TICK_LOG_FILE_NPC_FERENGI);
 
                         // Create an account for vendor user
                         $sql='INSERT INTO treuhandkonto (code,timestep) VALUES ('.$code.','.$ACTUAL_TICK.')';
                         if(!$this->db->query($sql))
                             $this->sdl->log('<b>CRITICAL ERROR:</b> cannot create auction trust account number: '.$code.' CONTINUED',
-                                TICK_LOG_FILE_NPC);
+                                TICK_LOG_FILE_NPC_FERENGI);
 
                         // Ship enters in the spacedock of the BOT
                         $spacedock=$this->bot['planet_id']*(-1);
@@ -553,11 +553,11 @@ class Ferengi extends NPC
                                                  fleet_id="'.$spacedock.'"
                                 WHERE ship_id="'.$tradedata['ship_id'].'"';
                         if(!$this->db->query($sql)) {
-                            $this->sdl->log('<b>CRITICAL ERROR:</b> cannot give the ship to Ramona - '.$sql, TICK_LOG_FILE_NPC);
+                            $this->sdl->log('<b>CRITICAL ERROR:</b> cannot give the ship to Ramona - '.$sql, TICK_LOG_FILE_NPC_FERENGI);
                         }
                         else {
                             $this->sdl->log('Ramona got a ship ('.$spacedock.')... shiptrade['.$tradedata['id'].'], processed sucessfully',
-                                TICK_LOG_FILE_NPC);
+                                TICK_LOG_FILE_NPC_FERENGI);
                         }
                     }
                 }
@@ -570,16 +570,16 @@ class Ferengi extends NPC
                     LIMIT '.$n_shiptrades;
             if(!$this->db->query($sql)) {
                 $this->sdl->log('<b>CRITICAL ERROR:</b> cannot update scheduler_shiptrade data - CONTINUED -'.$sql,
-                    TICK_LOG_FILE_NPC);
+                    TICK_LOG_FILE_NPC_FERENGI);
             }
             unset($tradedata);
         }
-        $this->sdl->finish_job('Shiptrade Scheduler', TICK_LOG_FILE_NPC);
+        $this->sdl->finish_job('Shiptrade Scheduler', TICK_LOG_FILE_NPC_FERENGI);
 
         // ########################################################################################
         // ########################################################################################
         // Trust accounts monitor
-        $this->sdl->start_job('Trust accounts monitor', TICK_LOG_FILE_NPC);
+        $this->sdl->start_job('Trust accounts monitor', TICK_LOG_FILE_NPC_FERENGI);
         $paid_debts=0;
         $debtors=0;
         $fun_providers=0;
@@ -591,13 +591,13 @@ class Ferengi extends NPC
         // Retrieve all debts still not solved
         $sql = 'SELECT * FROM schulden_table WHERE status=0';
         if(($trades = $this->db->query($sql)) === false) {
-            $this->sdl->log('<b>Error:</b> cannot query scheduler shiptrade data! - SKIPPED', TICK_LOG_FILE_NPC);
+            $this->sdl->log('<b>Error:</b> cannot query scheduler shiptrade data! - SKIPPED', TICK_LOG_FILE_NPC_FERENGI);
         }
         else {
             $names = array ('unit_1','unit_2','unit_3','unit_4','unit_5','unit_6',
                             'ress_1','ress_2','ress_3','id');
 
-            $this->sdl->log('Examining debts....', TICK_LOG_FILE_NPC);
+            $this->sdl->log('Examining debts....', TICK_LOG_FILE_NPC_FERENGI);
 
             while($debt = $this->db->fetchrow($trades))
             {
@@ -605,7 +605,7 @@ class Ferengi extends NPC
                 $sql = 'SELECT language FROM user WHERE user_id='.$debt['user_ver'];
                 if(!($vendor = $this->db->queryrow($sql)))
                 {
-                    $this->sdl->log('<b>Error:</b> cannot read vendor user language!', TICK_LOG_FILE_NPC);
+                    $this->sdl->log('<b>Error:</b> cannot read vendor user language!', TICK_LOG_FILE_NPC_FERENGI);
                     $vendor['language'] = 'ENG';
                 }
 
@@ -615,7 +615,7 @@ class Ferengi extends NPC
                 if(!($purchaser = $this->db->queryrow($sql)))
                 {
                     $this->sdl->log('<b>Error:</b> cannot read purchaser data! - CONTINUED',
-                        TICK_LOG_FILE_NPC);
+                        TICK_LOG_FILE_NPC_FERENGI);
                     $purchaser['language'] = 'ENG';
                 }
 
@@ -623,9 +623,9 @@ class Ferengi extends NPC
                 $accounts = $this->db->query('SELECT *,code AS id FROM treuhandkonto WHERE code="'.$debt['id'].'"');
                 $num = $this->db->num_rows();
                 if($num > 1) {
-                    $this->sdl->log('<b>PROGRAMMING ERROR:</b> apparently, there are more then one trust accounts on the same debts_table - SKIPPED', TICK_LOG_FILE_NPC);
+                    $this->sdl->log('<b>PROGRAMMING ERROR:</b> apparently, there are more then one trust accounts on the same debts_table - SKIPPED', TICK_LOG_FILE_NPC_FERENGI);
                 }else if($num <= 0) {
-                    $this->sdl->log('<b>BUG ERROR:</b> apparently, there is no trust account for the debts_table - SKIPPED', TICK_LOG_FILE_NPC);
+                    $this->sdl->log('<b>BUG ERROR:</b> apparently, there is no trust account for the debts_table - SKIPPED', TICK_LOG_FILE_NPC_FERENGI);
                 }else if($num == 1) {
                     $account=$this->db->fetchrow($accounts);
 
@@ -640,10 +640,10 @@ class Ferengi extends NPC
                     {
                         // Look if anyone has missed his trading
                         $this->sdl->log('Everything not paid: user #'.$debt['user_kauf'].' trust account  #'.$account['code'],
-                            TICK_LOG_FILE_NPC);
+                            TICK_LOG_FILE_NPC_FERENGI);
                         if($account['timestep']!=$debt['timestep'])
                         {
-                            $this->sdl->log('<b>Error:</b> user #'.$debt['user_kauf'].' debts and trust account '.$debt['id'].'/'.$account['code'].' have different time steps', TICK_LOG_FILE_NPC);
+                            $this->sdl->log('<b>Error:</b> user #'.$debt['user_kauf'].' debts and trust account '.$debt['id'].'/'.$account['code'].' have different time steps', TICK_LOG_FILE_NPC_FERENGI);
                         }else {
                             // Check if there's still time to pay the debt and purchaser
                             // has not been warned yet
@@ -699,7 +699,7 @@ class Ferengi extends NPC
                                 $sql = 'UPDATE schulden_table SET mahnung=mahnung+1
                                         WHERE id="'.$account['code'].'" AND user_ver="'.$debt['user_ver'].'"';
                                 if(!$this->db->query($sql))
-                                    $this->sdl->log('<b>Error:</b> cannot write user warning - CONTINUED', TICK_LOG_FILE_NPC);
+                                    $this->sdl->log('<b>Error:</b> cannot write user warning - CONTINUED', TICK_LOG_FILE_NPC_FERENGI);
                             }
                             // If payment deadline is overdue
                             if($ACTUAL_TICK>=($period+$account['timestep']))
@@ -716,18 +716,18 @@ class Ferengi extends NPC
                                               id="'.$debt['id'].'"';
                                 if(!$this->db->query($sql))
                                     $this->sdl->log('<b>Error:</b> cannot delete debts_table for auction #'.$debt['id'],
-                                        TICK_LOG_FILE_NPC);
+                                        TICK_LOG_FILE_NPC_FERENGI);
 
                                 $sql = 'DELETE FROM treuhandkonto WHERE code="'.$debt['id'].'"';
                                 if(!$this->db->query($sql))
                                     $this->sdl->log('<b>Error:</b> cannot delete trust account for auction #'.$debt['id'],
-                                        TICK_LOG_FILE_NPC);
+                                        TICK_LOG_FILE_NPC_FERENGI);
 
                                 // Prepare to lock the user from the trade center
                                 $sql = 'INSERT INTO FHB_sperr_list VALUES(null,'.$debt['user_kauf'].','.$ACTUAL_TICK.')';
                                 if(!$this->db->query($sql))
                                     $this->sdl->log('<b>Error:</b> cannot insert user #'.$debt['user_kauf'].' in the blacklist',
-                                        TICK_LOG_FILE_NPC);
+                                        TICK_LOG_FILE_NPC_FERENGI);
 
                                 // Here we should check if user_trade must be increased
                                 // by one or not.
@@ -783,10 +783,10 @@ class Ferengi extends NPC
                                 $sql = 'INSERT INTO `FHB_warteschlange` VALUES (NULL,'.$debt['user_ver'].','.$debt['ship_id'].')';
                                 if(!$this->db->query($sql))
                                     $this->sdl->log('<b>CRITICAL ERROR:</b> cannot put ship in the queue - CONTINUED'.$sql,
-                                        TICK_LOG_FILE_NPC);
+                                        TICK_LOG_FILE_NPC_FERENGI);
 
                                 $this->sdl->log('User #'.$debt['user_ver'].' got his ship #'.$debt['ship_id'].' back',
-                                    TICK_LOG_FILE_NPC);
+                                    TICK_LOG_FILE_NPC_FERENGI);
 
                                 // Retrieve language of the vendor
                                 switch($vendor['language'])
@@ -833,7 +833,7 @@ class Ferengi extends NPC
                     {
                         foreach ($names as $key) {
                             $this->sdl->log('Comparison between '.$account[$key].' and '.$debt[$key].' ends successfully',
-                                TICK_LOG_FILE_NPC);
+                                TICK_LOG_FILE_NPC_FERENGI);
                         }
 
                         // Debt paid off and made visible
@@ -841,7 +841,7 @@ class Ferengi extends NPC
                         $sql ='UPDATE schulden_table SET status="1" WHERE id='.$account['code'].'';
                         if(!$this->db->query($sql)) {
                             $this->sdl->log('<b>Error:</b> cannot update schulden_table to "everything paid" - CONTINUED',
-                                TICK_LOG_FILE_NPC);
+                                TICK_LOG_FILE_NPC_FERENGI);
                         }
 
                         // Message to the vendor
@@ -878,11 +878,11 @@ class Ferengi extends NPC
                         $sql = 'INSERT INTO `FHB_warteschlange` VALUES (NULL , '.$debt['user_kauf'].', '.$debt['ship_id'].')';
                         if(!$this->db->query($sql)) {
                             $this->sdl->log('<b>CRITICAL ERROR:</b> cannot put ship in the queue - SKIPPED',
-                                TICK_LOG_FILE_NPC);
+                                TICK_LOG_FILE_NPC_FERENGI);
                         }
                         else {
                             $this->sdl->log('User #'.$debt['user_kauf'].' got his new ship #'.$debt['ship_id'],
-                                TICK_LOG_FILE_NPC);
+                                TICK_LOG_FILE_NPC_FERENGI);
 
                             // Message to the purchaser
                             switch($purchaser['language'])
@@ -929,13 +929,13 @@ class Ferengi extends NPC
                 $sql = 'DELETE FROM schulden_table WHERE id='.$debt_to_remove['id'].' AND status=2';
                 if(!$this->db->query($sql)) {
                     $this->sdl->log('<b>CRITICAL ERROR:</b> cannot delete entry: '.$debt_to_remove['id'].' in debts_table',
-                        TICK_LOG_FILE_NPC);
+                        TICK_LOG_FILE_NPC_FERENGI);
                 }
                 else {
                     $sql = 'DELETE FROM treuhandkonto WHERE code="'.$debt_to_remove['id'].'"';
                     if(!$this->db->query($sql)) {
                         $this->sdl->log('<b>CRITICAL ERROR:</b> cannot delete entry:'.$debt_to_remove['id'].' in treuhandkonto',
-                            TICK_LOG_FILE_NPC);
+                            TICK_LOG_FILE_NPC_FERENGI);
                     }
                     $deleted_accounts++;
                 }
@@ -943,63 +943,63 @@ class Ferengi extends NPC
         }
         else {
             $this->sdl->log('<b>Error:</b> cannot execute empties accounts query, status not changed',
-                TICK_LOG_FILE_NPC);
+                TICK_LOG_FILE_NPC_FERENGI);
         }
 
-        $this->sdl->log('Queued ships    : '.$queued_ships, TICK_LOG_FILE_NPC);
-        $this->sdl->log('Paid debts      : '.$paid_debts, TICK_LOG_FILE_NPC);
-        $this->sdl->log('Debtors         : '.$debtors, TICK_LOG_FILE_NPC);
-        $this->sdl->log('Deleted accounts: '.$deleted_accounts, TICK_LOG_FILE_NPC);
-        $this->sdl->log('Fun bidders     : '.$fun_providers, TICK_LOG_FILE_NPC);
-        $this->sdl->log('Warnings sent   : '.$messages, TICK_LOG_FILE_NPC);
-        $this->sdl->finish_job('Trust accounts monitor', TICK_LOG_FILE_NPC);
+        $this->sdl->log('Queued ships    : '.$queued_ships, TICK_LOG_FILE_NPC_FERENGI);
+        $this->sdl->log('Paid debts      : '.$paid_debts, TICK_LOG_FILE_NPC_FERENGI);
+        $this->sdl->log('Debtors         : '.$debtors, TICK_LOG_FILE_NPC_FERENGI);
+        $this->sdl->log('Deleted accounts: '.$deleted_accounts, TICK_LOG_FILE_NPC_FERENGI);
+        $this->sdl->log('Fun bidders     : '.$fun_providers, TICK_LOG_FILE_NPC_FERENGI);
+        $this->sdl->log('Warnings sent   : '.$messages, TICK_LOG_FILE_NPC_FERENGI);
+        $this->sdl->finish_job('Trust accounts monitor', TICK_LOG_FILE_NPC_FERENGI);
         // ########################################################################################
         // ########################################################################################
         // Calculate troops sales
-        $this->sdl->start_job('Stock trading ship', TICK_LOG_FILE_NPC);
+        $this->sdl->start_job('Stock trading ship', TICK_LOG_FILE_NPC_FERENGI);
         $min_tick=$ACTUAL_TICK-(20*24);
         if($min_tick<0) $min_tick=0;
         $max_tick=$ACTUAL_TICK;
         $new_graph = (($ACTUAL_TICK % 20) == 0) ? 'true' : 'false';
-        $this->sdl->log('Actual Tick: '.$ACTUAL_TICK.' -- '.$new_graph.' -- Period of: '.$min_tick, TICK_LOG_FILE_NPC);
+        $this->sdl->log('Actual Tick: '.$ACTUAL_TICK.' -- '.$new_graph.' -- Period of: '.$min_tick, TICK_LOG_FILE_NPC_FERENGI);
 
         // AC: I believe the original intention, since job's name was to graph also ships trading
 
         if($new_graph == 'true')
         {
-            $this->sdl->log('New graph is made.....', TICK_LOG_FILE_NPC);
+            $this->sdl->log('New graph is made.....', TICK_LOG_FILE_NPC_FERENGI);
             include("simple_graph.class.php");
             exec('cd '.FILE_PATH_hg.'kurs/; rm -f *.png');
 
-            $this->sdl->start_job('Purchase - Unit', TICK_LOG_FILE_NPC);
+            $this->sdl->start_job('Purchase - Unit', TICK_LOG_FILE_NPC_FERENGI);
             $this->graph_draw("unit_1");
             $this->graph_draw("unit_2");
             $this->graph_draw("unit_3");
             $this->graph_draw("unit_4");
             $this->graph_draw("unit_5");
             $this->graph_draw("unit_6");
-            $this->sdl->finish_job('Purchase - Unit', TICK_LOG_FILE_NPC);
+            $this->sdl->finish_job('Purchase - Unit', TICK_LOG_FILE_NPC_FERENGI);
         }
-        $this->sdl->finish_job('Stock trading ship', TICK_LOG_FILE_NPC);
+        $this->sdl->finish_job('Stock trading ship', TICK_LOG_FILE_NPC_FERENGI);
         // ########################################################################################
         // ########################################################################################
         // Users release from TC
-        $this->sdl->start_job('Users release', TICK_LOG_FILE_NPC);
+        $this->sdl->start_job('Users release', TICK_LOG_FILE_NPC_FERENGI);
         $sql = "SELECT user_id,language FROM user
                 WHERE user_trade>0 AND
                       trade_tick<=".$ACTUAL_TICK." AND trade_tick!=0";
         if(!$temps=$this->db->query($sql))
-            $this->sdl->log('<b>Error:</b> cannot query user data - SKIP', TICK_LOG_FILE_NPC);
+            $this->sdl->log('<b>Error:</b> cannot query user data - SKIP', TICK_LOG_FILE_NPC_FERENGI);
         $number_released=0; 
         while($result = $this->db->fetchrow($temps))
         {
             $sql = 'UPDATE user SET trade_tick=0 WHERE user_id="'.$result['user_id'].'"';
             if(!$this->db->query($sql))
                 $this->sdl->log('<b>Error:</b> cannot update user data - CONTINUED',
-                    TICK_LOG_FILE_NPC);
+                    TICK_LOG_FILE_NPC_FERENGI);
 
             $this->sdl->log('User: #'.$result['user_id'].' got the freedom from the feared womAn of this Galaxy',
-                TICK_LOG_FILE_NPC);
+                TICK_LOG_FILE_NPC_FERENGI);
             $number_released++;
 
             /* Retrieve language of the sender */
@@ -1038,16 +1038,16 @@ class Ferengi extends NPC
             }
             $this->MessageUser($this->bot['user_id'],$result['user_id'],$title,$text);
         }
-        $this->sdl->log('There were '.$number_released.' users released', TICK_LOG_FILE_NPC);
-        $this->sdl->finish_job('Users release', TICK_LOG_FILE_NPC);
+        $this->sdl->log('There were '.$number_released.' users released', TICK_LOG_FILE_NPC_FERENGI);
+        $this->sdl->finish_job('Users release', TICK_LOG_FILE_NPC_FERENGI);
         // ########################################################################################
         // ########################################################################################
         // Users lock for TC
-        $this->sdl->start_job('Users lock', TICK_LOG_FILE_NPC);
+        $this->sdl->start_job('Users lock', TICK_LOG_FILE_NPC_FERENGI);
         $sql = "SELECT count(*) as number,user_id FROM FHB_sperr_list GROUP By user_id";
         if(!$blacklist=$this->db->query($sql))
             $this->sdl->log('<b>Error:</b> cannot read blacklist data - SKIP',
-                TICK_LOG_FILE_NPC);
+                TICK_LOG_FILE_NPC_FERENGI);
 
         $number_locks=0; 
         $users_list='';
@@ -1067,7 +1067,7 @@ class Ferengi extends NPC
 
                 $sql = 'SELECT user_id,user_trade,trade_tick,language FROM user WHERE user_id="'.$result['user_id'].'"';
                 if(!($user=$this->db->queryrow($sql)))
-                    $this->sdl->log('<b>Error:</b> cannot query user data - SKIPPED', TICK_LOG_FILE_NPC);
+                    $this->sdl->log('<b>Error:</b> cannot query user data - SKIPPED', TICK_LOG_FILE_NPC_FERENGI);
 
                 if($user['user_trade']<$result['number'] && $user['trade_tick']!=0)
                 {
@@ -1077,9 +1077,9 @@ class Ferengi extends NPC
                             WHERE user_id="'.$result['user_id'].'"';
                     if(!$this->db->query($sql))
                         $this->sdl->log('<b>Error:</b> User #'.$result['user_id'].' cannot be locked for '.$block.' ticks',
-                            TICK_LOG_FILE_NPC);
+                            TICK_LOG_FILE_NPC_FERENGI);
 
-                    $this->sdl->log('User: #'.$result['user_id'].' has gotten a higher punishment - We, which has done this injustice, are bad', TICK_LOG_FILE_NPC);
+                    $this->sdl->log('User: #'.$result['user_id'].' has gotten a higher punishment - We, which has done this injustice, are bad', TICK_LOG_FILE_NPC_FERENGI);
 
                     // Retrieve language of the sender
                     switch($user['language'])
@@ -1123,9 +1123,9 @@ class Ferengi extends NPC
                             WHERE user_id="'.$result['user_id'].'"';
                     if(!$this->db->query($sql))
                         $this->sdl->log('<b>Error:</b> User #'.$result['user_id'].' cannot be locked for '.$block_min.' minutes.',
-                            TICK_LOG_FILE_NPC);
+                            TICK_LOG_FILE_NPC_FERENGI);
 
-                    $this->sdl->log('User: #'.$result['user_id'].' was banned - he will meet his doom', TICK_LOG_FILE_NPC);
+                    $this->sdl->log('User: #'.$result['user_id'].' was banned - he will meet his doom', TICK_LOG_FILE_NPC_FERENGI);
 
                     // Retrieve language of the sender
                     switch($user['language'])
@@ -1167,15 +1167,15 @@ class Ferengi extends NPC
                 }
             }
         }
-        $this->sdl->log('Users '.$users_list.' have their penalties now let me turn to my problems in women clarify matters.', TICK_LOG_FILE_NPC);
-        $this->sdl->log('There were '.$number_locks.' users locked', TICK_LOG_FILE_NPC);
-        $this->sdl->finish_job('Users lock', TICK_LOG_FILE_NPC);
+        $this->sdl->log('Users '.$users_list.' have their penalties now let me turn to my problems in women clarify matters.', TICK_LOG_FILE_NPC_FERENGI);
+        $this->sdl->log('There were '.$number_locks.' users locked', TICK_LOG_FILE_NPC_FERENGI);
+        $this->sdl->finish_job('Users lock', TICK_LOG_FILE_NPC_FERENGI);
         // ########################################################################################
         // ########################################################################################
         // Update Ramona resources availability
 
         if(MALL_RESOURCES_AVAILABLE) {
-            $this->sdl->start_job('Update Ramona resources svailability', TICK_LOG_FILE_NPC);
+            $this->sdl->start_job('Update Ramona resources availability', TICK_LOG_FILE_NPC_FERENGI);
 
             // Read resources and units available on Ramona's planet
             $sql='SELECT unit_1, unit_2, unit_3, unit_4, unit_5, unit_6, resource_1, resource_2, resource_3 FROM planets
@@ -1183,9 +1183,9 @@ class Ferengi extends NPC
 
             $resources = $this->db->queryrow($sql);
 
-            $this->sdl->log('Available resources: '.$resources['resource_1'].' -- '.$resources['resource_2'].' -- '.$resources['resource_3'], TICK_LOG_FILE_NPC);
+            $this->sdl->log('Available resources: '.$resources['resource_1'].' -- '.$resources['resource_2'].' -- '.$resources['resource_3'], TICK_LOG_FILE_NPC_FERENGI);
 
-            $this->sdl->log('Available units: '.$resources['unit_1'].' -- '.$resources['unit_2'].' -- '.$resources['unit_3'].' -- '.$resources['unit_4'].' -- '.$resources['unit_5'].' -- '.$resources['unit_6'], TICK_LOG_FILE_NPC);
+            $this->sdl->log('Available units: '.$resources['unit_1'].' -- '.$resources['unit_2'].' -- '.$resources['unit_3'].' -- '.$resources['unit_4'].' -- '.$resources['unit_5'].' -- '.$resources['unit_6'], TICK_LOG_FILE_NPC_FERENGI);
 
             // Check if the table for the Commercial Centre is already present
             $sql='SELECT unit_1, unit_2, unit_3, unit_4, unit_5, unit_6, ress_1, ress_2, ress_3 FROM FHB_Handels_Lager
@@ -1193,14 +1193,14 @@ class Ferengi extends NPC
 
             if(!($tradecenter = $this->db->queryrow($sql)))
             {
-                $this->sdl->log('<b>Warning:</b> Table FHB_Handels_Lager was empty! CONTINUED', TICK_LOG_FILE_NPC);
+                $this->sdl->log('<b>Warning:</b> Table FHB_Handels_Lager was empty! CONTINUED', TICK_LOG_FILE_NPC_FERENGI);
 
                 // Create an entry item in the table
                 $sql = 'INSERT INTO FHB_Handels_Lager (unit_1, unit_2,unit_3, unit_4,unit_5,unit_6,ress_1,ress_2,ress_3)
                     VALUES (0, 0, 0, 0, 0, 0, 0, 0, 0)';
 
                 if(!$this->db->query($sql)) {
-                    $this->sdl->log('<b>Error:</b> Could not insert Handelslager - '.$update_res, TICK_LOG_FILE_NPC);
+                    $this->sdl->log('<b>Error:</b> Could not insert Handelslager - '.$update_res, TICK_LOG_FILE_NPC_FERENGI);
                 }
             }
             else
@@ -1243,7 +1243,7 @@ class Ferengi extends NPC
                         $pick_u[5] = $resources['unit_6'] / 200;
                 }
 
-                $this->sdl->log('Add units: '.$pick_u[0].' -- '.$pick_u[1].' -- '.$pick_u[2].' -- '.$pick_u[3].' -- '.$pick_u[4].' -- '.$pick_u[5], TICK_LOG_FILE_NPC);
+                $this->sdl->log('Add units: '.$pick_u[0].' -- '.$pick_u[1].' -- '.$pick_u[2].' -- '.$pick_u[3].' -- '.$pick_u[4].' -- '.$pick_u[5], TICK_LOG_FILE_NPC_FERENGI);
 
                 // 200408 DC ---- Nothing is for nothing
                 $pick_r = array();
@@ -1257,7 +1257,7 @@ class Ferengi extends NPC
                     if($metal_cost > $tradecenter['ress_1']  || $mineral_cost > $tradecenter['ress_2'] )
                         $pick_u[0] = 0;
                     else {
-                        $this->sdl->log('Resources for Lvl 1 Soldiers: Metals '.$metal_cost.' Minerals '.$mineral_cost, TICK_LOG_FILE_NPC);
+                        $this->sdl->log('Resources for Lvl 1 Soldiers: Metals '.$metal_cost.' Minerals '.$mineral_cost, TICK_LOG_FILE_NPC_FERENGI);
                         $pick_r[0] += $metal_cost;
                         $pick_r[1] += $mineral_cost;
                     }
@@ -1269,7 +1269,7 @@ class Ferengi extends NPC
                     if($metal_cost > $tradecenter['ress_1']  || $mineral_cost > $tradecenter['ress_2'] )  
                         $pick_u[1] = 0;
                     else {
-                        $this->sdl->log('Resources for Lvl 2 Soldiers: Metals '.$metal_cost.' Minerals '.$mineral_cost, TICK_LOG_FILE_NPC);
+                        $this->sdl->log('Resources for Lvl 2 Soldiers: Metals '.$metal_cost.' Minerals '.$mineral_cost, TICK_LOG_FILE_NPC_FERENGI);
                         $pick_r[0] += $metal_cost;
                         $pick_r[1] += $mineral_cost;
                     }
@@ -1282,7 +1282,7 @@ class Ferengi extends NPC
                     if($metal_cost > $tradecenter['ress_1']  || $mineral_cost > $tradecenter['ress_2']  || $dilithium_cost > $tradecenter['ress_3'] )
                         $pick_u[2] = 0;
                     else {
-                        $this->sdl->log('Resources for Lvl 3 Soldiers: Metals '.$metal_cost.' - Minerals '.$mineral_cost.' - Dilithium '.$dilithium_cost, TICK_LOG_FILE_NPC);
+                        $this->sdl->log('Resources for Lvl 3 Soldiers: Metals '.$metal_cost.' - Minerals '.$mineral_cost.' - Dilithium '.$dilithium_cost, TICK_LOG_FILE_NPC_FERENGI);
                         $pick_r[0] += $metal_cost;
                         $pick_r[1] += $mineral_cost;
                         $pick_r[2] += $dilithium_cost;
@@ -1296,7 +1296,7 @@ class Ferengi extends NPC
                     if($metal_cost > $tradecenter['ress_1']  || $mineral_cost > $tradecenter['ress_2']  || $dilithium_cost > $tradecenter['ress_3'] )
                         $pick_u[3] = 0;
                     else {
-                        $this->sdl->log('Resources for Captains: Metals '.$metal_cost.' - Minerals '.$mineral_cost.' - Dilithium '.$dilithium_cost, TICK_LOG_FILE_NPC);
+                        $this->sdl->log('Resources for Captains: Metals '.$metal_cost.' - Minerals '.$mineral_cost.' - Dilithium '.$dilithium_cost, TICK_LOG_FILE_NPC_FERENGI);
                         $pick_r[0] += $metal_cost;
                         $pick_r[1] += $mineral_cost;
                         $pick_r[2] += $dilithium_cost;
@@ -1310,7 +1310,7 @@ class Ferengi extends NPC
                     if($metal_cost > $tradecenter['ress_1']  || $mineral_cost > $tradecenter['ress_2']  || $dilithium_cost > $tradecenter['ress_3'] )
                         $pick_u[4] = 0;
                     else {
-                        $this->sdl->log('Resources for Techs: Metals '.$metal_cost.' - Minerals '.$mineral_cost.' - Dilithium '.$dilithium_cost, TICK_LOG_FILE_NPC);
+                        $this->sdl->log('Resources for Techs: Metals '.$metal_cost.' - Minerals '.$mineral_cost.' - Dilithium '.$dilithium_cost, TICK_LOG_FILE_NPC_FERENGI);
                         $pick_r[0] += $metal_cost;
                         $pick_r[1] += $mineral_cost;
                         $pick_r[2] += $dilithium_cost;
@@ -1324,7 +1324,7 @@ class Ferengi extends NPC
                     if($metal_cost > $tradecenter['ress_1']  || $mineral_cost > $tradecenter['ress_2']  || $dilithium_cost > $tradecenter['ress_3'] ) 
                         $pick_u[5] = 0;
                     else {
-                        $this->sdl->log('Resources for Docs: Metals '.$metal_cost.' - Minerals '.$mineral_cost.' - Dilithium '.$dilithium_cost, TICK_LOG_FILE_NPC);
+                        $this->sdl->log('Resources for Docs: Metals '.$metal_cost.' - Minerals '.$mineral_cost.' - Dilithium '.$dilithium_cost, TICK_LOG_FILE_NPC_FERENGI);
                         $pick_r[0] += $metal_cost;
                         $pick_r[1] += $mineral_cost;
                         $pick_r[2] += $dilithium_cost;
@@ -1352,7 +1352,7 @@ class Ferengi extends NPC
                             $pick_r[2] = $resources['resource_3']  /  125;
                     }
 
-                    $this->sdl->log('Add resources: '.$pick_r[0].' -- '.$pick_r[1].' -- '.$pick_r[2], TICK_LOG_FILE_NPC);
+                    $this->sdl->log('Add resources: '.$pick_r[0].' -- '.$pick_r[1].' -- '.$pick_r[2], TICK_LOG_FILE_NPC_FERENGI);
 
                     $update_res='UPDATE FHB_Handels_Lager SET
                         unit_1=unit_1+'.$pick_u[0].',unit_2=unit_2+'.$pick_u[1].',unit_3=unit_3+'.$pick_u[2].',
@@ -1360,7 +1360,7 @@ class Ferengi extends NPC
                         ress_1=ress_1+'.$pick_r[0].',ress_2=ress_2+'.$pick_r[1].',ress_3=ress_3+'.$pick_r[2].' WHERE id=1';
                     }
                 else {
-                    $this->sdl->log('Picking resources from CC: '.$pick_r[0].' -- '.$pick_r[1].' -- '.$pick_r[2], TICK_LOG_FILE_NPC);
+                    $this->sdl->log('Picking resources from CC: '.$pick_r[0].' -- '.$pick_r[1].' -- '.$pick_r[2], TICK_LOG_FILE_NPC_FERENGI);
 
                     $update_res='UPDATE FHB_Handels_Lager SET
                         unit_1=unit_1+'.$pick_u[0].',unit_2=unit_2+'.$pick_u[1].',unit_3=unit_3+'.$pick_u[2].',
@@ -1370,7 +1370,7 @@ class Ferengi extends NPC
 
                 // Update resources and units available in the commercial centre
                 if(!$this->db->query($update_res)) {
-                    $this->sdl->log('<b>Error:</b> Could not update Handelslager - '.$update_res, TICK_LOG_FILE_NPC);
+                    $this->sdl->log('<b>Error:</b> Could not update Handelslager - '.$update_res, TICK_LOG_FILE_NPC_FERENGI);
                 }
                 else
                 {
@@ -1390,7 +1390,7 @@ class Ferengi extends NPC
                             WHERE planet_id = '.$this->bot['planet_id'];
                     }
                     if(!$this->db->query($sql)) {
-                        $this->sdl->log('<b>Error:</b> Could not update Ramona\'s planet - '.$sql, TICK_LOG_FILE_NPC);
+                        $this->sdl->log('<b>Error:</b> Could not update Ramona\'s planet - '.$sql, TICK_LOG_FILE_NPC_FERENGI);
                     }
 
                     // If needed, we have to tell to Ramona to create some fresh units
@@ -1423,7 +1423,7 @@ class Ferengi extends NPC
                         if($train_u[0] != 0 || $train_u[1] != 0 || $train_u[2] != 0 ||
                            $train_u[3] != 0 || $train_u[4] != 0 || $train_u[5] != 0)
                         {
-                            $this->sdl->log('Produce new units: '.$train_u[0].' -- '.$train_u[1].' -- '.$train_u[2].' -- '.$train_u[3].' -- '.$train_u[4].' -- '.$train_u[5], TICK_LOG_FILE_NPC);
+                            $this->sdl->log('Produce new units: '.$train_u[0].' -- '.$train_u[1].' -- '.$train_u[2].' -- '.$train_u[3].' -- '.$train_u[4].' -- '.$train_u[5], TICK_LOG_FILE_NPC_FERENGI);
 
                             $sql='UPDATE planets SET
                                 unit_1=unit_1+'.$train_u[0].',unit_2=unit_2+'.$train_u[1].',unit_3=unit_3+'.$train_u[2].',
@@ -1431,26 +1431,26 @@ class Ferengi extends NPC
                                 WHERE planet_id = '.$this->bot['planet_id'];
 
                             if(!$this->db->query($sql)) {
-                                $this->sdl->log('<b>Error:</b> Could not instruct Ramona to produce new units - '.$sql, TICK_LOG_FILE_NPC);
+                                $this->sdl->log('<b>Error:</b> Could not instruct Ramona to produce new units - '.$sql, TICK_LOG_FILE_NPC_FERENGI);
                             }
                         }
                     }
                     else
-                        $this->sdl->log('<b>Error:</b> Cannot read from Ramona\'s planet!', TICK_LOG_FILE_NPC);
+                        $this->sdl->log('<b>Error:</b> Cannot read from Ramona\'s planet!', TICK_LOG_FILE_NPC_FERENGI);
                 }
                 $this->db->unlock('FHB_Handels_Lager');
             }
 
-            $this->sdl->finish_job('Update Ramona resources svailability', TICK_LOG_FILE_NPC);
+            $this->sdl->finish_job('Update Ramona resources availability', TICK_LOG_FILE_NPC_FERENGI);
         }
 
         // ########################################################################################
         // ########################################################################################
         // Ferengi Trade Center blacklist Cleanup
-        $this->sdl->start_job('Blacklist cleanup', TICK_LOG_FILE_NPC);
+        $this->sdl->start_job('Blacklist cleanup', TICK_LOG_FILE_NPC_FERENGI);
         $sql = "SELECT user_id FROM FHB_sperr_list GROUP BY user_id";
         if(!$blacklist=$this->db->query($sql))
-            $this->sdl->log('<b>Error:</b> cannot read blacklist data - SKIP',TICK_LOG_FILE_NPC);
+            $this->sdl->log('<b>Error:</b> cannot read blacklist data - SKIP',TICK_LOG_FILE_NPC_FERENGI);
         else {
             while($result = $this->db->fetchrow($blacklist))
             {
@@ -1464,21 +1464,21 @@ class Ferengi extends NPC
                         $log_msg = '<b>Error:</b> cannot remove dead user from blacklist - CONTINUED';
                     else
                         $log_msg = 'Deleted user #'.$result['user_id'].' removed from blacklist';
-                    $this->sdl->log($log_msg,TICK_LOG_FILE_NPC);
+                    $this->sdl->log($log_msg,TICK_LOG_FILE_NPC_FERENGI);
                 }
             }
         }
-        $this->sdl->finish_job('Blacklist cleanup', TICK_LOG_FILE_NPC);
+        $this->sdl->finish_job('Blacklist cleanup', TICK_LOG_FILE_NPC_FERENGI);
         // ########################################################################################
         // ########################################################################################
         // Learning is boring here fixed the cheating of resources by troops sale
-        $this->sdl->start_job('Soldiers Transactions', TICK_LOG_FILE_NPC);
+        $this->sdl->start_job('Soldiers Transactions', TICK_LOG_FILE_NPC_FERENGI);
         $transactions=0;
         $sql = 'SELECT id, unit_1, unit_2, unit_3, unit_4, unit_5, unit_6
                 FROM FHB_cache_trupp_trade WHERE tick<='.$ACTUAL_TICK;
         if(!$troops_traded = $this->db->query($sql))
             $this->sdl->log('<b>Error:</b> cannot read troops transactions - SKIP',
-                TICK_LOG_FILE_NPC);
+                TICK_LOG_FILE_NPC_FERENGI);
         else {
             while($cache_trade = $this->db->fetchrow($troops_traded))
             {
@@ -1494,18 +1494,18 @@ class Ferengi extends NPC
                          WHERE id=1';
                 if(!$this->db->query($sql))
                     $this->sdl->log('<b>Error:</b> cannot update trading stock - CONTINUED',
-                        TICK_LOG_FILE_NPC);
+                        TICK_LOG_FILE_NPC_FERENGI);
 
                 $this->db->unlock('FHB_Handels_Lager');
 
                 $sql = 'DELETE FROM FHB_cache_trupp_trade WHERE id='.$cache_trade['id'];
                 if(!$this->db->query($sql))
                     $this->sdl->log('<b>Error:</b> cannot remove troops transaction - CONTINUED',
-                        TICK_LOG_FILE_NPC);
+                        TICK_LOG_FILE_NPC_FERENGI);
             }
-            $this->sdl->log('Transactions: '.$transactions, TICK_LOG_FILE_NPC);
+            $this->sdl->log('Transactions: '.$transactions, TICK_LOG_FILE_NPC_FERENGI);
         }
-        $this->sdl->finish_job('Soldiers Transactions', TICK_LOG_FILE_NPC);
+        $this->sdl->finish_job('Soldiers Transactions', TICK_LOG_FILE_NPC_FERENGI);
         // ########################################################################################
         // ########################################################################################
         // Sensors monitoring and user warning
@@ -1534,13 +1534,13 @@ class Ferengi extends NPC
                         '<b>Sie sind auf unseren Sensoren</b>',
                         '<b>Siete sui nostri sensori</b>');
 
-        $this->CheckSensors($ACTUAL_TICK,$titles,$messages);
+        $this->CheckSensors($ACTUAL_TICK,$titles,$messages,TICK_LOG_FILE_NPC_FERENGI);
         // ########################################################################################
         // ########################################################################################
         // Ships creation
-        $this->sdl->start_job('Creating ships', TICK_LOG_FILE_NPC);
+        $this->sdl->start_job('Creating ships', TICK_LOG_FILE_NPC_FERENGI);
 
-        $this->sdl->log('Check fleet "Alpha-Fleet IVX" composition', TICK_LOG_FILE_NPC);
+        $this->sdl->log('Check fleet "Alpha-Fleet IVX" composition', TICK_LOG_FILE_NPC_FERENGI);
         $query='SELECT fleet_id FROM `ship_fleets` WHERE fleet_name="Alpha-Fleet IVX" and user_id='.$this->bot['user_id'].' LIMIT 0, 1';
         $this->db->query($query);
         if($this->db->num_rows()<=0)
@@ -1548,22 +1548,22 @@ class Ferengi extends NPC
             $sql = 'INSERT INTO ship_fleets (fleet_name, user_id, planet_id, move_id, n_ships)
                 VALUES ("Alpha-Fleet IVX", '.$this->bot['user_id'].', '.$this->bot['planet_id'].', 0, 4000)';
             if(!$this->db->query($sql))
-                $this->sdl->log('<b>Error:</b> Could not insert new fleets data', TICK_LOG_FILE_NPC);
+                $this->sdl->log('<b>Error:</b> Could not insert new fleets data', TICK_LOG_FILE_NPC_FERENGI);
             else {
                 $fleet_id = $this->db->insert_id();
                 $stpl1_found = true;
                 $stpl2_found = true;
 
-                if(!$fleet_id) $this->sdl->log('Error - '.$fleet_id.' = empty', TICK_LOG_FILE_NPC);
+                if(!$fleet_id) $this->sdl->log('Error - '.$fleet_id.' = empty', TICK_LOG_FILE_NPC_FERENGI);
 
                 $sql_a= 'SELECT min_unit_1, min_unit_2, min_unit_3, min_unit_4, value_5, value_9
                          FROM ship_templates WHERE id = '.$this->bot['ship_t_1'];
                 $sql_b= 'SELECT min_unit_1, min_unit_2, min_unit_3, min_unit_4, value_5, value_9
                          FROM ship_templates WHERE id = '.$this->bot['ship_t_2'];
                 if(($stpl_a = $this->db->queryrow($sql_a)) === false)
-                    $this->sdl->log('<b>Error:</b> Could not query ship template data - '.$sql_a, TICK_LOG_FILE_NPC);
+                    $this->sdl->log('<b>Error:</b> Could not query ship template data - '.$sql_a, TICK_LOG_FILE_NPC_FERENGI);
                 if(($stpl_b = $this->db->queryrow($sql_b)) === false)
-                    $this->sdl->log('<b>Error:</b> Could not query ship template data - '.$sql_b, TICK_LOG_FILE_NPC);
+                    $this->sdl->log('<b>Error:</b> Could not query ship template data - '.$sql_b, TICK_LOG_FILE_NPC_FERENGI);
 
                 // Check if the templates exists
                 if (empty($stpl_a)) $stpl1_found = false;
@@ -1582,24 +1582,24 @@ class Ferengi extends NPC
                         if (!$stpl1_found) continue;
                         
                         if(!$this->db->query($sql_c)) {
-                            $this->sdl->log('<b>Error:</b> Could not insert new ships #'.$i.' data', TICK_LOG_FILE_NPC);
+                            $this->sdl->log('<b>Error:</b> Could not insert new ships #'.$i.' data', TICK_LOG_FILE_NPC_FERENGI);
                         }
                     }else{
                         // Skip if template not found
                         if (!$stpl2_found) continue;
 
                         if(!$this->db->query($sql_d)) {
-                            $this->sdl->log('<b>Error:</b> Could not insert new ships #'.$i.' data', TICK_LOG_FILE_NPC);
+                            $this->sdl->log('<b>Error:</b> Could not insert new ships #'.$i.' data', TICK_LOG_FILE_NPC_FERENGI);
                         }
                     }
                 }
-                $this->sdl->log('Fleet: '.$fleet_id.' - 4000 ships created', TICK_LOG_FILE_NPC);
+                $this->sdl->log('Fleet: '.$fleet_id.' - 4000 ships created', TICK_LOG_FILE_NPC_FERENGI);
             }
         }
         // Check whether someone has destroyed some Quark's ships
         $this->RestoreFleetLosses("Alpha-Fleet IVX",$this->bot['ship_t_2'],4000);
 
-        $this->sdl->log('Check fleet "Interception Omega" composition', TICK_LOG_FILE_NPC);
+        $this->sdl->log('Check fleet "Interception Omega" composition', TICK_LOG_FILE_NPC_FERENGI);
         $query='SELECT fleet_id FROM `ship_fleets` WHERE fleet_name="Interception Omega" and user_id='.$this->bot['user_id'].' LIMIT 0, 1';
         $this->db->query($query);
         if($this->db->num_rows()<=0)
@@ -1607,16 +1607,16 @@ class Ferengi extends NPC
             $sql= 'INSERT INTO ship_fleets (fleet_name, user_id, planet_id, move_id, n_ships)
                 VALUES ("Interception Omega", '.$this->bot['user_id'].', '.$this->bot['planet_id'].', 0, 1000)';
             if(!$this->db->query($sql))
-                $this->sdl->log('<b>Error:</b> Could not insert new fleets data', TICK_LOG_FILE_NPC);
+                $this->sdl->log('<b>Error:</b> Could not insert new fleets data', TICK_LOG_FILE_NPC_FERENGI);
             else {
                 $fleet_id= $this->db->insert_id();
 
-                if(!$fleet_id) $this->sdl->log('Error - '.$fleet_id.' = empty', TICK_LOG_FILE_NPC);
+                if(!$fleet_id) $this->sdl->log('Error - '.$fleet_id.' = empty', TICK_LOG_FILE_NPC_FERENGI);
 
                 $sql_b = 'SELECT min_unit_1, min_unit_2, min_unit_3, min_unit_4, value_5, value_9
                           FROM ship_templates WHERE id = '.$this->bot['ship_t_2'];
                 if(($stpl_b = $this->db->queryrow($sql_b)) === false)
-                    $this->sdl->log('<b>Error:</b> Could not query ship template data - '.$sql_b, TICK_LOG_FILE_NPC);
+                    $this->sdl->log('<b>Error:</b> Could not query ship template data - '.$sql_b, TICK_LOG_FILE_NPC_FERENGI);
 
                 if (!empty($stpl_b)) {
                     $units_str_2 = $stpl_b['min_unit_1'].', '.$stpl_b['min_unit_2'].', '.$stpl_b['min_unit_3'].', '.$stpl_b['min_unit_4'];
@@ -1626,24 +1626,24 @@ class Ferengi extends NPC
                     for($i = 0; $i < 1000; ++$i)
                     {
                         if(!$this->db->query($sql)) {
-                            $this->sdl->log('<b>Error:</b> Could not insert new ships #'.$i.' data', TICK_LOG_FILE_NPC);
+                            $this->sdl->log('<b>Error:</b> Could not insert new ships #'.$i.' data', TICK_LOG_FILE_NPC_FERENGI);
                         }
                     }
-                    $this->sdl->log('Fleet: '.$fleet_id.' - 1000 ships created', TICK_LOG_FILE_NPC);
+                    $this->sdl->log('Fleet: '.$fleet_id.' - 1000 ships created', TICK_LOG_FILE_NPC_FERENGI);
                 }
                 else
-                    $this->sdl->log('<b>Error:</b> Could not found template '.$this->bot['ship_t_2'].'!', TICK_LOG_FILE_NPC);
+                    $this->sdl->log('<b>Error:</b> Could not found template '.$this->bot['ship_t_2'].'!', TICK_LOG_FILE_NPC_FERENGI);
             }
         }
         // Check whether someone has destroyed some Quark's ships
         $this->RestoreFleetLosses("Interception Omega",$this->bot['ship_t_2'],1000);
 
-        $this->sdl->finish_job('Creating ships', TICK_LOG_FILE_NPC);
+        $this->sdl->finish_job('Creating ships', TICK_LOG_FILE_NPC_FERENGI);
 
         // ########################################################################################
         // ########################################################################################
 
-        $this->sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime()+time())-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$this->db->i_query.'</font></b>', TICK_LOG_FILE_NPC);
+        $this->sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime()+time())-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$this->db->i_query.'</font></b>', TICK_LOG_FILE_NPC_FERENGI);
     }
 
     function graph_draw($kind)
@@ -1654,7 +1654,7 @@ class Ferengi extends NPC
         // I believe we can do better then this...
         $sql = 'SELECT '.$kind.', tick FROM FHB_handel_log WHERE art=1  ORDER BY `tick` ASC';
         if(($units_sold = $this->db->query($sql)) === false) {
-            $this->sdl->log('<b>Error:</b> cannot read transactions data for units '.$kind.'! SKIP',TICK_LOG_FILE_NPC);
+            $this->sdl->log('<b>Error:</b> cannot read transactions data for units '.$kind.'! SKIP',TICK_LOG_FILE_NPC_FERENGI);
             return;
         }
 

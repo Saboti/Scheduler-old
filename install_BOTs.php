@@ -32,6 +32,7 @@ include('config.script.php');
 include($game_path . 'include/global.php');
 include($game_path . 'include/functions.php');
 include($game_path . 'include/libs/world.php');
+include($game_path . 'include/sql.php');
 
 // include BOTs classes definitions
 include('NPC_BOT.php');
@@ -45,7 +46,7 @@ include('commons.php');
 error_reporting(E_ERROR);
 
 if(!empty($_SERVER['SERVER_SOFTWARE'])) {
-    echo 'The scheduler can only be called by CLI!'; exit;
+    //echo 'The scheduler can only be called by CLI!'; exit;
 }
 
 

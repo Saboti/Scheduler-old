@@ -35,14 +35,14 @@ include('commons.php');
 include($game_path . 'include/global.php');
 include($game_path . 'include/functions.php');
 include($game_path . 'include/libs/maps.php');
+include($game_path . 'include/sql.php');
 
 define('TICK_LOG_FILE', $game_path . 'logs/daily.log');
 define('IN_SCHEDULER', true); // we are in the scheduler...
 
-error_reporting(E_ERROR);
-
 if(!empty($_SERVER['SERVER_SOFTWARE'])) {
-    echo 'The scheduler can only be called by CLI!'; exit;
+    echo 'The scheduler can only be called by CLI!'; 
+	exit;
 }
 
 

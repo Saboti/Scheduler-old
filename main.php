@@ -29,7 +29,6 @@
 include('config.script.php');
 include($game_path . 'include/sql.php');
 
-error_reporting(E_ERROR);
 ini_set('memory_limit', '200M');
 set_time_limit(240); // 4 minutes
 
@@ -793,7 +792,9 @@ $sdl->finish_job('Future Humans Rewards');
 //BOT
 ini_set('memory_limit', '500M');
 define('FILE_PATH_hg',$game_path);
-define('TICK_LOG_FILE_NPC', $game_path.'logs/NPC_BOT_tick_'.date('d-m-Y', time()).'.log');
+define('TICK_LOG_FILE_NPC_BORG', $game_path.'logs/NPC_BOT_BORG_tick_'.date('d-m-Y', time()).'.log');
+define('TICK_LOG_FILE_NPC_FERENGI', $game_path.'logs/NPC_BOT_FERENGI_tick_'.date('d-m-Y', time()).'.log');
+define('TICK_LOG_FILE_NPC_SETTLERS', $game_path.'logs/NPC_BOT_SETTLERS_tick_'.date('d-m-Y', time()).'.log');
 include('NPC_BOT.php');
 include('ferengi.php');
 include('borg.php');
