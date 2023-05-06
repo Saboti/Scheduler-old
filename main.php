@@ -379,7 +379,7 @@ else
 
                     if (!$started)
                     {
-                        $sql[]='unittrainid_nexttime="-1"';
+                        $sql[]='unittrainid_nexttime="0"';
                     }
                 }
 
