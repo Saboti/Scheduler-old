@@ -172,9 +172,14 @@ class simpleGraph
     
     $start_x = 35;
     $maxhoehe = 120;
-    if($biggestValue){
+    if($biggestValue)
+	{
         $faktor1 = $maxhoehe / $biggestValue;
     } 
+	else
+	{
+		$faktor1 = 1;
+	}
     
     for($i=0; $i<$arrCount; $i++){
         $hoehe = $faktor1 * $arr[$i]['size']; 

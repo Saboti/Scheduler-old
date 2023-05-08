@@ -26,23 +26,23 @@
 // Startup Config
 
 // include game definitions, path url and so on
-include('config.script.php');
+include_once('config.script.php');
 
 // include functions and classes needed by the installation
-include($game_path . 'include/global.php');
-include($game_path . 'include/functions.php');
-include($game_path . 'include/libs/world.php');
+include_once($game_path . 'include/global.php');
+include_once($game_path . 'include/functions.php');
+include_once($game_path . 'include/libs/world.php');
+include_once($game_path . 'include/sql.php');
 
 // include BOTs classes definitions
-include('NPC_BOT.php');
-include('ferengi.php');
-include('borg.php');
-include('settlers.php');
+include_once('NPC_BOT.php');
+include_once('ferengi.php');
+include_once('borg.php');
+include_once('settlers.php');
 
 // include commons classes and functions
-include('commons.php');
+include_once('commons.php');
 
-error_reporting(E_ERROR);
 
 if(!empty($_SERVER['SERVER_SOFTWARE'])) {
     echo 'The scheduler can only be called by CLI!'; exit;
@@ -53,13 +53,11 @@ if(!empty($_SERVER['SERVER_SOFTWARE'])) {
 // ########################################################################################
 // Init
 
-$starttime = ( microtime() + time() );
+$starttime = ( microtime(true) );
 
-$sdl = new scheduler();
+$sdl = new scheduler("INSTALL-BOT");
 
-$sdl->log('<br><b>-------------------------------------------------------------</b><br>'.
-          '<b>Starting Install BOTs at '.date('d.m.y H:i:s', time()).'</b>',
-    INSTALL_LOG_FILE_NPC);
+$sdl->info('Starting Install BOTs at '.date('d.m.y H:i:s', time()));
 
 // create sql-object for db-connection
 $db = new sql($config['server'].":".$config['port'], $config['game_database'],
@@ -68,15 +66,15 @@ $db = new sql($config['server'].":".$config['port'], $config['game_database'],
 $game = new game();
 
 // Install Quark BOT
-$quark = new Ferengi($db,$sdl);
+$quark = new Ferengi($db);
 $quark->Install();
 
 // Install SevenOfNine BOT
-$borg = new Borg($db,$sdl);
+$borg = new Borg($db);
 $borg->Install();
 
 // Install Settlers BOT
-$settlers = new Settlers($db,$sdl);
+$settlers = new Settlers($db);
 $settlers->Install();
 
 
@@ -86,8 +84,7 @@ $settlers->Install();
 
 $db->close();
 
-$sdl->log('<b>Finished Install BOTs in <font color=#009900>'.round((microtime()+time())-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>',
-    INSTALL_LOG_FILE_NPC);
+$sdl->info('Finished Install BOTs in '.round((microtime(true))-$starttime, 4).' secs. Executed Queries: '.$db->i_query);
 
 ?>
 

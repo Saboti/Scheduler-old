@@ -26,9 +26,8 @@
 // Startup Config
 
 // include game definitions, path url and so on
-include('config.script.php');
+include_once('config.script.php');
 
-error_reporting(E_ERROR);
 ini_set('memory_limit', '200M');
 set_time_limit(300); // 5 minutes
 
@@ -41,35 +40,35 @@ define('TICK_LOG_FILE_NPC', TICK_LOG_FILE);
 define('IN_SCHEDULER', true); // we are in the scheduler...
 
 // include commons classes and functions
-include('commons.php');
+include_once('commons.php');
 
 // include BOT class
-include('NPC_BOT.php');
+include_once('NPC_BOT.php');
 
 
 // #######################################################################################
 // #######################################################################################
 // Init
 
-$starttime = ( microtime() + time() );
+$starttime = ( microtime(true) + time() );
 
-include($game_path . 'include/global.php');
-include($game_path . 'include/functions.php');
-include($game_path . 'include/text_races.php');
-include($game_path . 'include/race_data.php');
-include($game_path . 'include/ship_data.php');
-include($game_path . 'include/libs/moves.php');
+include_once($game_path . 'include/global.php');
+include_once($game_path . 'include/functions.php');
+include_once($game_path . 'include/text_races.php');
+include_once($game_path . 'include/race_data.php');
+include_once($game_path . 'include/ship_data.php');
+include_once($game_path . 'include/libs/moves.php');
+include_once($game_path . 'include/sql.php');
 
-$sdl = new scheduler();
+$sdl = new scheduler("TICK-SIX-HOURS");
 $db = new sql($config['server'].":".$config['port'], $config['game_database'], $config['user'], $config['password']); // create sql-object for db-connection
 
 $game = new game();
 
-$sdl->log('<br><br><br><b>-------------------------------------------------------------</b><br>'.
-          '<b>Starting SixHours-Script at '.date('d.m.y H:i:s', time()).'</b>');
+$sdl->indo('Starting SixHours-Script at '.date('d.m.y H:i:s', time()));
 
 if(($cfg_data = $db->queryrow('SELECT * FROM config')) === false) {
-    $sdl->log('- Fatal: Could not query tick data! ABORTED');
+    $sdl->fatal('- Fatal: Could not query tick data! ABORTED');
   exit;
 }
 
@@ -79,12 +78,12 @@ $LAST_TICK_TIME = ($cfg_data['tick_time']-5*60);
 $STARDATE = $cfg_data['stardate'];
 
 if($cfg_data['tick_stopped']) {
-    $sdl->log('Finished SixHours-Script in '.round((microtime()+time())-$starttime, 4).' secs<br>Tick has been stopped (Unlock in table "config")');
+    $sdl->info('Finished SixHours-Script in '.round((microtime(true))-$starttime, 4).' secs<br>Tick has been stopped (Unlock in table "config")');
     exit;
 }
 
 if(empty($ACTUAL_TICK)) {
-    $sdl->log('Finished SixHours-Script in '.round((microtime()+time())-$starttime, 4).' secs<br>- Fatal: empty($ACTUAL_TICK) == true');
+    $sdl->fatal('Finished SixHours-Script in '.round((microtime(true))-$starttime, 4).' secs<br>- Fatal: empty($ACTUAL_TICK) == true');
     exit;
 }
 
@@ -96,8 +95,8 @@ Example Job:
 $sdl->start_job('Mine Job');
 
 do something ... during error / message:
-  $sdl->log('...');
-best also - before, so it's apart from the other messages, also: $sdl->log('- this was not true');
+  $sdl->info('...');
+best also - before, so it's apart from the other messages, also: $sdl->info('- this was not true');
 
 $sdl->finish_job('Mine Job'); // terminates the timer
 
@@ -114,12 +113,12 @@ $sdl->start_job('Recalculate colony ship limits');
 $sql = 'SELECT count(user_id) as num_users FROM user 
         WHERE user_active = 1 AND user_auth_level = '.STGC_PLAYER;
 if(!$players = $db->queryrow($sql)) {
-    $sdl->log('<b>Error:</b> Could not query users number! SKIP');
+    $sdl->error('Could not query users number! SKIP');
 }
 elseif($players['num_users'] > 30) {
     $sql = 'SELECT user_points FROM user ORDER BY user_points DESC LIMIT 30,1';
     if(!$limit = $db->queryrow($sql)) {
-        $sdl->log('<b>Error:</b> Could not query user points data! CONTINUED');
+        $sdl->error('Could not query user points data! CONTINUED');
         $limit['user_points'] = 2000;
     }
     // Are there "big" players present?
@@ -130,12 +129,12 @@ elseif($players['num_users'] > 30) {
     // Who is ABOVE the threshold can have only five colony ship at a time!!!
     $sql = 'UPDATE user SET user_max_colo = 5 WHERE user_points > '.$limit['user_points'];
     if(!$db->query($sql))
-        $sdl->log('<b>Error:</b> Cannot set user_max_colo to 5! CONTINUED');
+        $sdl->error('Cannot set user_max_colo to 5! CONTINUED');
 
     //Who is equal to or smaller than the threshold, can do as many colony ship as he want!!!
     $sql = 'UPDATE user SET user_max_colo = 0 WHERE user_points <= '.$limit['user_points'];
     if(!$db->query($sql))
-        $sdl->log('<b>Error:</b> Cannot set user_max_colo to 0! CONTINUED');
+        $sdl->error('Cannot set user_max_colo to 0! CONTINUED');
 }
 $sdl->finish_job('Recalculate colony ship limits');
 
@@ -215,17 +214,17 @@ while($planet=$db->fetchrow($borg_planets)) {
                          resource_4 = '.$workers.'
                   WHERE planet_id = '.$planet['planet_id'];
 
-            $sdl->log('Mines workers increased to: '.$miners[0].'/'.$miners[1].'/'.$miners[2].' on Borg planet: <b>#'.$planet['planet_id'].'</b>');
+            $sdl->info('Mines workers increased to: '.$miners[0].'/'.$miners[1].'/'.$miners[2].' on Borg planet: <b>#'.$planet['planet_id'].'</b>');
 
             $mines_upgraded++;
 
             if(!$db->query($sql)) {
-                $sdl->log('<b>Error:</b> could not update mines workers!');
+                $sdl->error('could not update mines workers!');
             }
         }
     }
 }
-if($mines_upgraded != 0) $sdl->log('Upgraded <b>'.$mines_upgraded.'</b> mines on Borg planets');
+if($mines_upgraded != 0) $sdl->info('Upgraded <b>'.$mines_upgraded.'</b> mines on Borg planets');
 $sdl->finish_job('Check miners on Borg planets');
 
 
@@ -235,6 +234,6 @@ $sdl->finish_job('Check miners on Borg planets');
 // Quit and close log
 
 $db->close();
-$sdl->log('<b>Finished SixHours-Script in <font color=#009900>'.round((microtime()+time())-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
+$sdl->info('<b>Finished SixHours-Script in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
 
 ?>

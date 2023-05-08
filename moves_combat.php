@@ -58,7 +58,7 @@ global $UNIT_DATA,$SHIP_DATA,$SHIP_TORSO;
 
 
 
-$start_time = (time() + microtime());
+$start_time = (microtime(true));
 
 
 $overview['attacker']=$attacking_ships['num_ships']=count($attacking_ships);
@@ -322,9 +322,9 @@ if ($defending_ships[$t]['experience']<10) $defending_ships[$t]['experience']=10
 
 
 
-if ((time() + microtime())-$start_time>10)
+if ((microtime(true))-$start_time>10)
 {
-commonlog('Moves [NewCombat]', 'Run to shipconfigure-1 done within '.((time() + microtime())-$start_time).' seconds', $move_id);
+commonlog('Moves [NewCombat]', 'Run to shipconfigure-1 done within '.((microtime(true))-$start_time).' seconds', $move_id);
 }
 
 
@@ -395,9 +395,9 @@ $ships[$tmpship['ship_id']]=$tmpship;
 
 
 
-if ((time() + microtime())-$start_time>10)
+if ((microtime(true))-$start_time>10)
 {
-commonlog('Moves [NewCombat]', 'Run to shipconfigure-2 done within '.((time() + microtime())-$start_time).' seconds', $move_id);
+commonlog('Moves [NewCombat]', 'Run to shipconfigure-2 done within '.((microtime(true))-$start_time).' seconds', $move_id);
 }
 
 
@@ -475,19 +475,19 @@ unset($defending_ships);
 
 
 commonlog('Moves [NewCombat]', 'Prepared '.count($ships).' ships including '.$num_orbitaldefense.'+'.$num_smallorbitaldefense.' orbital platforms', $move_id);
-if ((time() + microtime())-$start_time>10)
+if (microtime(true)-$start_time>10)
 {
-commonlog('Moves [NewCombat]', 'Prepared '.count($ships).' ships including '.$num_orbitaldefense.'+'.$num_smallorbitaldefense.' orbital platforms in '.((time() + microtime())-$start_time).' seconds', $move_id);
-$stime = (time() + microtime());
+commonlog('Moves [NewCombat]', 'Prepared '.count($ships).' ships including '.$num_orbitaldefense.'+'.$num_smallorbitaldefense.' orbital platforms in '.((microtime(true))-$start_time).' seconds', $move_id);
+$stime = (microtime(true));
 }
 
-$randtime = (time() + microtime());
+$randtime = (microtime(true));
 
 // In besseren Zeiten war geplant, die Schiffe zu sortieren, nicht zu mischen :/
 shuffle($ships);
-commonlog('Moves [NewCombat]', 'shuffle data time: '.((time() + microtime()) - $randtime), $move_id);
+commonlog('Moves [NewCombat]', 'shuffle data time: '.((microtime(true)) - $randtime), $move_id);
 
-$savetime = (time() + microtime());
+$savetime = (microtime(true));
 
 
 $file=fopen($script_path.'Scheduler/combat.data','w');
@@ -514,15 +514,15 @@ fwrite($file,$imploded);
 
 fclose($file);
 //fclose($file2);
-commonlog('Moves [NewCombat]', 'transmit data time: '.((time() + microtime()) - $savetime), $move_id);
+commonlog('Moves [NewCombat]', 'transmit data time: '.((microtime(true)) - $savetime), $move_id);
 
 
 
-$cppstarttime = (time() + microtime());
+$cppstarttime = (microtime(true));
 
 
 exec($script_path.'Scheduler/newfight',$data);
-commonlog('Moves [NewCombat]', 'C++ calculation time: '.((time() + microtime()) - $cppstarttime), $move_id);
+commonlog('Moves [NewCombat]', 'C++ calculation time: '.((microtime(true)) - $cppstarttime), $move_id);
 commonlog('Moves [NewCombat]', $data[1].' has won!', $move_id);
 
 
@@ -553,7 +553,7 @@ $updates_temp=array();
 
 
 
-$reviewstarttime = (time() + microtime());
+$reviewstarttime = (microtime(true));
 
 
 
@@ -638,7 +638,7 @@ if ($winner==1) $overview['defender_alive']=$overview['defender']-$winner_victim
 
 
 
-commonlog('Moves [NewCombat]', 'evaluation time: '.((time() + microtime()) - $reviewstarttime), $move_id);
+commonlog('Moves [NewCombat]', 'evaluation time: '.((microtime(true)) - $reviewstarttime), $move_id);
 
 
 
@@ -659,7 +659,7 @@ $text.='<br>';
 
 
 
-$total_time = (time() + microtime()) - $start_time;
+$total_time = (microtime(true)) - $start_time;
 
 commonlog('Moves [NewCombat]', 'Time elapsed '.$total_time, $move_id);
 
