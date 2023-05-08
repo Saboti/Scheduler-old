@@ -38,8 +38,8 @@ function fatal_handler() {
 
 		echo format_error( $errno, $errstr, $errfile, $errline);
 		$trace = print_r( debug_backtrace( false ), true );
-		$sdl->error("$errfile : $errline -- $errstr");
-		$sdl->error("$trace");
+		$sdl->fatal("$errfile : $errline -- $errstr");
+		$sdl->fatal("$trace");
         //mail("florian@fam-hinrichsen.de" , "Fatal Tick Error" ,format_error( $errno, $errstr, $errfile, $errline));
     }
 }
