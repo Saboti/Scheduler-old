@@ -141,16 +141,16 @@ class NPC
 		$this->sdl->finish_job('Messages answer');
 	}
 
-	function CheckSensors($ACTUAL_TICK,$titles,$messages,$logfile=TICK_LOG_FILE_NPC)
+	function CheckSensors($ACTUAL_TICK,$titles,$messages)
 	{
-		$this->sdl->start_job('Sensors monitor', $logfile);
+		$this->sdl->start_job('Sensors monitor');
 		$msgs_number=0;
 		$sql='SELECT user_id FROM `scheduler_shipmovement` WHERE user_id>9 AND 
 			move_status=0 AND move_exec_started!=1 AND move_finish>'.$ACTUAL_TICK.' AND  dest="'.$this->bot['planet_id'].'"';
 		$attackers=$this->db->query($sql);
 		while($attacker = $this->db->fetchrow($attackers))
 		{
-			$this->sdl->log('The User '.$attacker['user_id'].' is trying to attack bot planet', $logfile);
+			$this->sdl->info('The User '.$attacker['user_id'].' is trying to attack bot planet');
 			$msgs_number++;
 			$sql='SELECT planet_owner,planet_name FROM `planets`
 			      WHERE planet_owner ='.$attacker['user_id'].' LIMIT 0 , 1';
@@ -159,7 +159,7 @@ class NPC
 			// Recover language of the sender
 			$sql = 'SELECT language FROM user WHERE user_id='.$attacker['user_id'];
 			if(!($language = $this->db->queryrow($sql)))
-				$this->sdl->log('<b>Error:</b> Cannot read user language!',	$logfile);
+				$this->sdl->error('Cannot read user language!');
 
 			switch($language['language'])
 			{
@@ -180,8 +180,8 @@ class NPC
 			$this->MessageUser($this->bot['user_id'],$attacker['user_id'],$title,
 				str_replace("<TARGETPLANET>",$target_planet['planet_name'],$text));
 		}
-		$this->sdl->log('Number of messages:'.$msgs_number, $logfile);
-		$this->sdl->finish_job('Sensors monitor', $logfile);
+		$this->sdl->info('Number of messages:'.$msgs_number);
+		$this->sdl->finish_job('Sensors monitor');
 	}
 
 	function CreateFleet($name,$template,$num,$planet_id = 0)
@@ -235,27 +235,27 @@ class NPC
 		$query='SELECT fleet_id, n_ships FROM `ship_fleets` WHERE fleet_name="'.$name.'" and user_id='.$this->bot['user_id'].' LIMIT 0, 1';
 		$fleet=$this->db->queryrow($query);
 		if (empty($fleet)) {
-			$this->sdl->log('<u>Warning:</u> Fleet: '.$name.' does not exists! - SKIP', TICK_LOG_FILE_NPC);
+			$this->sdl->warn('Fleet: '.$name.' does not exists! - SKIP');
 			return;
 		}
 
 		if($fleet['n_ships'] < $num)
 		{
-			$this->sdl->log('Fleet "'.$name.'" has only '.$fleet['n_ships'].' ships - we need restore', TICK_LOG_FILE_NPC);
+			$this->sdl->info('Fleet "'.$name.'" has only '.$fleet['n_ships'].' ships - we need restore');
 			$needed = $num - $fleet['n_ships'];
 
 			$sql = 'UPDATE ship_fleets SET n_ships = n_ships + '.$needed.' WHERE fleet_id = '.$fleet['fleet_id'];
 			if(!$this->db->query($sql))
-				$this->sdl->log('<b>Error:</b> Could not update new fleets data', TICK_LOG_FILE_NPC);
+				$this->sdl->error('Could not update new fleets data');
 
 			$sql = 'SELECT min_unit_1, min_unit_2, min_unit_3, min_unit_4, rof, max_torp,
 			               value_5, value_9
 			        FROM ship_templates WHERE id = '.$template;
 			if(($stpl = $this->db->queryrow($sql)) === false)
-				$this->sdl->log('<b>Error:</b> Could not query ship template data - '.$sql, TICK_LOG_FILE_NPC);
+				$this->sdl->error('Could not query ship template data - '.$sql);
 
 			if (empty($stpl))
-				$this->sdl->log('<b>Error:</b> Could not found template '.$template.'!', TICK_LOG_FILE_NPC);
+				$this->sdl->error('Could not found template '.$template.'!');
 			else {
 				$units_str = $stpl['min_unit_1'].', '.$stpl['min_unit_2'].', '.$stpl['min_unit_3'].', '.$stpl['min_unit_4'];
 				$sql = 'INSERT INTO ships (fleet_id, user_id, template_id, experience,
@@ -266,10 +266,11 @@ class NPC
 				for($i = 0; $i < $needed; ++$i)
 				{
 					if(!$this->db->query($sql)) {
-						$this->sdl->log('<b>Error:</b> Could not insert new ships #'.$i.' data', TICK_LOG_FILE_NPC);
+						$this->sdl->error('Could not insert new ships #'.$i.' data');
 					}
 				}
-				$this->sdl->log('Fleet: '.$fleet['fleet_id'].' - updated to '.$needed.' ships', TICK_LOG_FILE_NPC);
+				
+				$this->sdl->info('Fleet: '.$fleet['fleet_id'].' - updated to '.$needed.' ships');
 			}
 		}
 	}
