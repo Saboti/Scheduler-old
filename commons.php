@@ -5,12 +5,12 @@ include_once('config.script.php');
 include_once($game_path . 'include/sql.php');
 
 // Define log Level
-define("LOG-FATAL",0);
-define("LOG-ERROR",1);
-define("LOG-WARN",2);
-define("LOG-INFO",3);
-define("LOG-DEBUG",4);
-define("LOG-JOB",5);
+define("LOG_LEVEL_FATAL",0);
+define("LOG_LEVEL_ERROR",1);
+define("LOG_LEVEL_WARN",2);
+define("LOG_LEVEL_INFO",3);
+define("LOG_LEVEL_DEBUG",3);
+define("LOG_LEVEL_JOB",5);
 
 
 // Error handler
@@ -36,7 +36,6 @@ function fatal_handler() {
         $errline = $error["line"];
         $errstr  = $error["message"];
 
-		echo format_error( $errno, $errstr, $errfile, $errline);
 		$trace = print_r( debug_backtrace( false ), true );
 		$sdl->fatal("$errfile : $errline -- $errstr");
 		$sdl->fatal("$trace");
@@ -300,7 +299,7 @@ class scheduler {
 		
 		if($module == '')
 		{
-			$module = "TICK-MAIN"
+			$module = "TICK-MAIN";
 		}
 		
 		$this->db = new sql($config['server'].":".$config['port'], $config['game_database'], $config['user'], $config['password']);
@@ -308,23 +307,23 @@ class scheduler {
 	}
 	
 	function fatal($message, $module = '') {
-		$this->log($message, LOG-FATAL);
+		$this->log($message, LOG_LEVEL_FATAL);
 	}	
 	
 	function error($message, $module = '') {
-		$this->log($message, LOG-ERROR);
+		$this->log($message, LOG_LEVEL_ERROR);
 	}	
 	
 	function warn($message, $module = '') {
-		$this->log($message, LOG-WARN);
+		$this->log($message, LOG_LEVEL_WARN);
 	}	
 	
 	function info($message, $module = '') {
-		$this->log($message, LOG-INFO);
+		$this->log($message, LOG_LEVEL_INFO);
 	}	
 	
 	function debug($message, $module = '') {
-		$this->log($message, LOG-DEBUG);
+		$this->log($message, LOG_LEVEL_DEBUG);
 	}
 	
 	
@@ -341,20 +340,23 @@ class scheduler {
 		
 		$sql = "INSERT INTO log(message,level,module,job) VALUES ('$message', $level, '$module', '$this->job');";		
 		$this->db->query($sql);
+		
+		echo "$level -> $module -> $message";
+		echo "<br>";
 	}
 
 	function start_job($name, $module = '') {
 		global $db;
 		$this->job = $name;
-		$this->log('Starting '.$name.' ...', LOG-JOB, $module);
+		$this->log('Starting '.$name.' ...', LOG_LEVEL_JOB, $module);
 		$this->start_values[$name] = array( microtime(true) , $db->i_query );
 	}
 
 	function finish_job($name, $module = '') {
 		global $db;
-		$this->job = '';
-		$this->log('Executed '.$name.' (queries: '.($db->i_query - $this->start_values[$name][1]).') in '.round( (microtime(true)) - $this->start_values[$name][0] , 4).' secs', LOG-JOB, $module);
+		$this->log('Executed '.$name.' (queries: '.($db->i_query - $this->start_values[$name][1]).') in '.round( (microtime(true)) - $this->start_values[$name][0] , 4).' secs', LOG_LEVEL_JOB, $module);
 
+		$this->job = '';
 	}
 }
 

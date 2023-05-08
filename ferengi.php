@@ -331,7 +331,7 @@ class Ferengi extends NPC
 
         $this->ReplyToUser($titles, $messages);
 
-        $this->sdl->finish_job('Shiptrade Scheduler');
+        $this->sdl->finish_job('Messages answer');
 		
         // ########################################################################################
         // ########################################################################################
