@@ -53,11 +53,10 @@ class NPC
 
 		if ($this->db->query($sql)==false)
 		{
-			$this->sdl->log('<b>Error:</b> Cannot send message to user '.$receiver.'!',
-				TICK_LOG_FILE_NPC);
+			$this->sdl->error('Cannot send message to user '.$receiver.'!');
 		}
-		$this->sdl->log("Senderid:".$sender." // Receiverid:".$receiver,
-			TICK_LOG_FILE_NPC);
+		
+		$this->sdl->debug("Senderid:".$sender." // Receiverid:".$receiver);
 
 		$num=$this->db->queryrow('SELECT COUNT(id) as unread FROM message
 		                          WHERE (receiver="'.$receiver.'") AND (rread=0)');
@@ -65,14 +64,14 @@ class NPC
 			$this->db->query('UPDATE user SET unread_messages="'.$num['unread'].'"
 			                  WHERE user_id="'.$receiver.'"');
 
-		$this->sdl->log("Num:".$num['unread'], TICK_LOG_FILE_NPC);
+		$this->sdl->info("Num:".$num['unread']);
 
 		return true;
 	}
 
-	function ChangePassword($log = TICK_LOG_FILE_NPC)
+	function ChangePassword()
 	{
-		$this->sdl->start_job('PW change', $log);
+		$this->sdl->start_job('PW change');
 		$new=rand(1,9);
 		$random="vv";
 		if($new==2) $new='v'.$random.'h';
@@ -87,10 +86,9 @@ class NPC
 		if($this->db->query('UPDATE `user` SET `user_password`=MD5("'.$new.'")
 		                     WHERE `user_id` ='.$this->bot['user_id']))
 		{
-			$this->sdl->log('Now there are only One-Night-Stands, no longer relations',
-				$log);
+			$this->sdl->debug('Now there are only One-Night-Stands, no longer relations');
 		}
-		$this->sdl->finish_job('PW change', $log);
+		$this->sdl->finish_job('PW change');
 	}
 
 	function ReplyToUser($titles,$messages)
@@ -288,17 +286,16 @@ class NPC
 		}
 	}
 
-	function ReadLogbook($logfile=TICK_LOG_FILE_NPC)
+	function ReadLogbook()
 	{
-		$this->sdl->start_job('Read Logbook', $logfile);
+		$this->sdl->start_job('Read Logbook');
 		$sql = 'UPDATE logbook SET log_read=1 WHERE user_id='.$this->bot['user_id'];
 		if(!$this->db->query($sql))
-			$this->sdl->log('<b>Error:</b> Logbook message could not be set to read',
-				$logfile);
-		$this->sdl->finish_job('Read Logbook', $logfile);
+			$this->sdl->error('Logbook message could not be set to read');
+		$this->sdl->finish_job('Read Logbook');
 	}
 
-	function StartBuild($ACTUAL_TICK,$building,$planet,$logfile=TICK_LOG_FILE_NPC)
+	function StartBuild($ACTUAL_TICK,$building,$planet)
 	{
 		global $MAX_BUILDING_LVL;
 		$res = BUILD_ERR_DB;
@@ -359,7 +356,7 @@ class NPC
 				        WHERE planet_id= '.$planet['planet_id'];
 
 				if (!$this->db->query($sql))
-					$this->sdl->log('<b>Error:</b> Cannot remove resources need for construction from planet #'.$planet['planet_id'].'!', $logfile);
+					$this->sdl->error('Cannot remove resources need for construction from planet #'.$planet['planet_id'].'!');
 
 				// Check planet activity
 				$sql = 'SELECT build_finish FROM scheduler_instbuild
@@ -385,23 +382,21 @@ class NPC
 					            "'.$build_finish.'")';
 
 				if (!$this->db->query($sql))
-					$this->sdl->log('<b>Error:</b> cannot add building <b>#'.$building.'</b> to the planet <b>#'.$planet['planet_id'].'</b>',
+					$this->sdl->error('cannot add building <b>#'.$building.'</b> to the planet <b>#'.$planet['planet_id'].'</b>',
 						$logfile);
 				else {
-					$this->sdl->log('Construction of <b>#'.$building.'</b> started on planet <b>#'.$planet['planet_id'].'</b>',
+					$this->sdl->debug('Construction of <b>#'.$building.'</b> started on planet <b>#'.$planet['planet_id'].'</b>',
 						$logfile);
 					$res = BUILD_SUCCESS;
 				}
 			}
 			else {
-				$this->sdl->log('Insufficient energy on planet <b>#'.$planet['planet_id'].'</b> for building <b>#'.$building.'</b>',
-					$logfile);
+				$this->sdl->warn('Insufficient energy on planet <b>#'.$planet['planet_id'].'</b> for building <b>#'.$building.'</b>');
 				$res = BUILD_ERR_ENERGY;
 			}
 		}
 		else {
-			$this->sdl->log('Insufficient resources on planet <b>#'.$planet['planet_id'].'</b> for building <b>#'.$building.'</b>',
-				$logfile);
+			$this->sdl->warn('Insufficient resources on planet <b>#'.$planet['planet_id'].'</b> for building <b>#'.$building.'</b>');
 			$res = BUILD_ERR_RESOURCES;
 		}
 		return $res;
