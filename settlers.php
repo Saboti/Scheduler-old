@@ -215,7 +215,7 @@ class Settlers extends NPC
     public function Execute($debug=0)
     {
         global $ACTUAL_TICK,$cfg_data,$RACE_DATA;
-        $starttime = ( microtime(true) + time() );
+        $starttime = ( microtime(true) );
 
         $this->sdl->info('Starting Settlers Bot Scheduler at '.date('d.m.y H:i:s', time()));
 
