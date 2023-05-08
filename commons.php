@@ -1,4 +1,49 @@
 <?php
+error_reporting(E_ALL);
+
+include_once('config.script.php');
+include_once($game_path . 'include/sql.php');
+
+// Define log Level
+define("LOG-FATAL",0);
+define("LOG-ERROR",1);
+define("LOG-WARN",2);
+define("LOG-INFO",3);
+define("LOG-DEBUG",4);
+define("LOG-JOB",5);
+
+
+// Error handler
+register_shutdown_function( "fatal_handler" );
+//set_error_handler('exceptions_error_handler');
+
+function exceptions_error_handler($severity, $message, $filename, $lineno) {
+    mail("florian@fam-hinrichsen.de" , "Tick Error" ,format_error( $severity, $message, $filename, $lineno));
+}
+
+function fatal_handler() {
+	global $sdl;
+    $errfile = "unknown file";
+    $errstr  = "shutdown";
+    $errno   = E_CORE_ERROR;
+    $errline = 0;
+
+    $error = error_get_last();
+
+    if($error !== NULL) {
+        $errno   = $error["type"];
+        $errfile = $error["file"];
+        $errline = $error["line"];
+        $errstr  = $error["message"];
+
+		echo format_error( $errno, $errstr, $errfile, $errline);
+		$trace = print_r( debug_backtrace( false ), true );
+		$sdl->error("$errfile : $errline -- $errstr");
+		$sdl->error("$trace");
+        //mail("florian@fam-hinrichsen.de" , "Fatal Tick Error" ,format_error( $errno, $errstr, $errfile, $errline));
+    }
+}
+
 /*	
 	This file is part of STFC.
 	Copyright 2006-2007 by Michael Krauss (info@stfc2.de) and Tobias Gafner
@@ -246,28 +291,69 @@ class sql {
 
 class scheduler {
 	var $start_values = array();
-
-	function log($message,$file = '') {
-		if($file=='')
-			$fp = fopen(TICK_LOG_FILE, 'a');
-		else
-			$fp = fopen($file, 'a');
-		fwrite($fp, $message."<br>\n");
-		fclose($fp);
+	var $db;
+	var $module;
+	var $job;
+	
+	function __construct($module = ''){
+		global $config;
+		
+		if($module == '')
+		{
+			$module = "TICK-MAIN"
+		}
+		
+		$this->db = new sql($config['server'].":".$config['port'], $config['game_database'], $config['user'], $config['password']);
+		$this->module = $module;
+	}
+	
+	function fatal($message, $module = '') {
+		$this->log($message, LOG-FATAL);
+	}	
+	
+	function error($message, $module = '') {
+		$this->log($message, LOG-ERROR);
+	}	
+	
+	function warn($message, $module = '') {
+		$this->log($message, LOG-WARN);
+	}	
+	
+	function info($message, $module = '') {
+		$this->log($message, LOG-INFO);
+	}	
+	
+	function debug($message, $module = '') {
+		$this->log($message, LOG-DEBUG);
+	}
+	
+	
+	function log($message, $level = -1, $module = '') {
+		if($level == -1)
+		{
+			$level = LOG-INFO;
+		}
+				
+		if($module == '')
+		{
+			$module = $this->module;
+		}
+		
+		$sql = "INSERT INTO log(message,level,module,job) VALUES ('$message', $level, '$module', '$this->job');";		
+		$this->db->query($sql);
 	}
 
-	function start_job($name,$file = '') {
+	function start_job($name, $module = '') {
 		global $db;
-
-		$this->log('<font color=#0000ff>Starting <b>'.$name.'</b>...</font>',$file);
-
-		$this->start_values[$name] = array( time() + microtime() , $db->i_query );
+		$this->job = $name;
+		$this->log('Starting '.$name.' ...', LOG-JOB, $module);
+		$this->start_values[$name] = array( microtime(true) , $db->i_query );
 	}
 
-	function finish_job($name,$file = '') {
+	function finish_job($name, $module = '') {
 		global $db;
-
-		$this->log('<font color=#0000ff>Executed <b>'.$name.'</b> (</font><font color=#ff0000>queries: '.($db->i_query - $this->start_values[$name][1]).'</font><font color=#0000ff>) in </font><font color=#009900>'.round( (time() + microtime()) - $this->start_values[$name][0] , 4).' secs</font><br>',$file);
+		$this->job = '';
+		$this->log('Executed '.$name.' (queries: '.($db->i_query - $this->start_values[$name][1]).') in '.round( (microtime(true)) - $this->start_values[$name][0] , 4).' secs', LOG-JOB, $module);
 
 	}
 }
