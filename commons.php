@@ -330,7 +330,7 @@ class scheduler {
 	function log($message, $level = -1, $module = '') {
 		if($level == -1)
 		{
-			$level = LOG-INFO;
+			$level = LOG_LEVEL_INFO;
 		}
 				
 		if($module == '')

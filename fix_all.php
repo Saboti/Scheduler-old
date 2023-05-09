@@ -147,13 +147,9 @@ while($user = $db->fetchrow($q_user)) {
         $sdl->error('could not update planet owner enum data! SKIP');
     }
 }
-$sdl->log($count.' of '.$count2.' planets now have adjusted values');
+$sdl->info($count.' of '.$count2.' planets now have adjusted values');
 
 $sdl->finish_job('Recalculate security forces');
-
-
-
-
 
 
 $sdl->start_job('Unimatrix Zero Maintenance');

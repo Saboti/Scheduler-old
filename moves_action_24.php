@@ -148,9 +148,10 @@ class moves_action_24 extends moves_common {
 
         // #############################################################################
         // Terraforming planet!!!
-
+		$this->log(MV_M_INFO, "action_data[1]: " . (bool)$this->action_data[1]);
         if((bool)$this->action_data[1]) {
 
+			$this->log(MV_M_INFO, "Start Terraforming");
             // Pre-Terraforming Check
             $sql='SELECT resource_3 FROM ship_fleets WHERE fleet_id IN ('.$this->fleet_ids_str.')';
             if(($dilicheck = $this->db->queryrow($sql)) === false) {
@@ -165,6 +166,7 @@ class moves_action_24 extends moves_common {
                 $log_data[8] = -3;
                 add_logbook_entry($this->move['user_id'], LOGBOOK_TACTICAL, $ter_title.$this->dest['planet_name'].$ter_fail, $log_data);
 
+				$this->log(MV_M_INFO, "Terraforming failed, missing dilithium: " . $dilithium);
                 return MV_EXEC_OK;
             }
 
@@ -302,8 +304,11 @@ class moves_action_24 extends moves_common {
 
         // #############################################################################
         // Planet goes to Settlers Community!
-
+		
+		$this->log(MV_M_INFO, "action_data[2]: " . (bool)$this->action_data[2]);
         if((bool)$this->action_data[2]) {
+			
+			$this->log(MV_M_INFO, "Start colo to Settlers");
             // Target planet MUST BE unsettled!
             if(!empty($this->dest['planet_owner'])) {
                 $log_data[8] = -4;
@@ -509,6 +514,7 @@ class moves_action_24 extends moves_common {
         }
 
 
+		$this->log(MV_M_INFO, "Start colo to ".$this->move['user_id']);
         // #############################################################################
         // We need the number of planets, which owns the colonizer
         // (we want to determine planet_owner_enum surely)
@@ -539,7 +545,7 @@ class moves_action_24 extends moves_common {
 
             $log_data[8] = -3;
             add_logbook_entry($this->move['user_id'], LOGBOOK_TACTICAL, $col_title.$this->dest['planet_name'].$col_fail, $log_data);
-
+			$this->log(MV_M_NOTICE, 'To much planets: '.$n_planets."/".$RACE_DATA[$this->move['user_race']][31]);
             return MV_EXEC_OK;
         }
 
@@ -547,6 +553,7 @@ class moves_action_24 extends moves_common {
         // #############################################################################
         // Colonization attempt
 
+		$this->log(MV_M_INFO, 'Colonization attempt');
         $sql = 'DELETE FROM scheduler_instbuild
                 WHERE planet_id = '.$this->move['dest'];
                 

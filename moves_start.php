@@ -45,7 +45,7 @@ include_once('commons.php');
 // ########################################################################################
 // Init
 
-$starttime = ( microtime(true) + time() );
+$starttime = ( microtime(true) );
 
 include_once($game_path . 'include/sql.php');
 include_once($game_path . 'include/global.php');

@@ -885,14 +885,14 @@ class Borg extends NPC
 
 			// Build some orbital guns
 			if($planet['building_10'] < (15 + $planet['research_3'])) {
-				$res = $this->StartBuild($ACTUAL_TICK,9,$planet,TICK_LOG_FILE_NPC_BORG);
+				$res = $this->StartBuild($ACTUAL_TICK,9,$planet);
 				if($res == BUILD_ERR_ENERGY)
-					$res = $this->StartBuild($ACTUAL_TICK,4,$planet,TICK_LOG_FILE_NPC_BORG);
+					$res = $this->StartBuild($ACTUAL_TICK,4,$planet);
 			}
 			if($planet['building_13'] < (15 + $planet['research_3'])) {
-				$res = $this->StartBuild($ACTUAL_TICK,12,$planet,TICK_LOG_FILE_NPC_BORG);
+				$res = $this->StartBuild($ACTUAL_TICK,12,$planet);
 				if($res == BUILD_ERR_ENERGY)
-					$res = $this->StartBuild($ACTUAL_TICK,4,$planet,TICK_LOG_FILE_NPC_BORG);
+					$res = $this->StartBuild($ACTUAL_TICK,4,$planet);
 			}
 
             $n_ships = 1;

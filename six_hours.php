@@ -35,8 +35,6 @@ if(!empty($_SERVER['SERVER_SOFTWARE'])) {
     echo 'The scheduler can only be called by CLI!'; exit;
 }
 
-define('TICK_LOG_FILE', $game_path . 'logs/sixhours/tick_'.date('d-m-Y', time()).'.log');
-define('TICK_LOG_FILE_NPC', TICK_LOG_FILE);
 define('IN_SCHEDULER', true); // we are in the scheduler...
 
 // include commons classes and functions
@@ -50,7 +48,7 @@ include_once('NPC_BOT.php');
 // #######################################################################################
 // Init
 
-$starttime = ( microtime(true) + time() );
+$starttime = ( microtime(true) );
 
 include_once($game_path . 'include/global.php');
 include_once($game_path . 'include/functions.php');
@@ -65,7 +63,7 @@ $db = new sql($config['server'].":".$config['port'], $config['game_database'], $
 
 $game = new game();
 
-$sdl->indo('Starting SixHours-Script at '.date('d.m.y H:i:s', time()));
+$sdl->info('Starting SixHours-Script at '.date('d.m.y H:i:s', time()));
 
 if(($cfg_data = $db->queryrow('SELECT * FROM config')) === false) {
     $sdl->fatal('- Fatal: Could not query tick data! ABORTED');
@@ -153,7 +151,7 @@ $sql = 'SELECT planet_id, planet_type,
                building_1, building_2, building_3, building_4, building_5,
                building_6, building_7, building_8, building_9, building_10,
                building_11, building_12, building_13,
-               resource_1, resource_2, resource_3, resource_4
+               resource_1, resource_2, resource_3, resource_4,
                research_3, research_4,
                workermine_1, workermine_2, workermine_3
         FROM planets WHERE planet_owner = '.BORG_USERID;

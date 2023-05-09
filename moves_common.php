@@ -28,6 +28,7 @@ define('MV_EXEC_OK', 1);
 define('MV_EXEC_ERROR', -1);
 
 // used for moves_common::log()
+define('MV_M_INFO', 0);
 define('MV_M_NOTICE', 1);
 define('MV_M_ERROR', 2);
 define('MV_M_DATABASE', 3);
@@ -681,6 +682,7 @@ class moves_common {
 
         if(!empty($this->move['action_data'])) {
             $this->action_data = (array)unserialize($this->move['action_data']);
+			$this->log(MV_M_INFO, "action_data: " . print_r($this->action_data, true));
         }
 
         // #############################################################################
