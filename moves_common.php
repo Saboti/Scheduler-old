@@ -152,26 +152,27 @@ class moves_common {
         switch($level) {
             case MV_M_NOTICE:
                 $sdl->warn('(move_id: '.$this->mid.') '.$message);
-            break;
+				break;
 
             case MV_M_ERROR:
                 $sdl->error('Error: (move_id: '.$this->mid.') '.$message);
-            break;
+				break;
 
             case MV_M_DATABASE:
                 $sdl->error('(move_id: '.$this->mid.') '.$message.' - '.$this->db->error['message'].' - '.$this->db->error['sql']);
-            break;
+				break;
+			
             case MV_M_CRITICAL:
                 $sdl->fatal('(move_id: '.$this->mid.') '.$message);
-            break;
+				break;
+			
             case MV_M_DEBUG:
                 $sdl->debug('(move_id: '.$this->mid.') '.$message);
-            break;
+				break;
 
             default:
                 $sdl->info($level.': (move_id: '.$this->mid.') '.$message);
-            break;
-
+				break;
         }
 
         return MV_EXEC_ERROR;
@@ -786,7 +787,7 @@ class moves_common {
             }
 
             $this->db->free_result($q_ar_uid);
-$this->log(MV_M_NOTICE,'AR-user(s): <b>'.count($ar_user).'</b>');
+			$this->log(MV_M_INFO,'AR-user(s): <b>'.count($ar_user).'</b>');
 
             for($i = 0; $i < count($ar_user); ++$i) {
                 $this->log(MV_M_NOTICE, 'Entering AR-loop #'.$i);
@@ -798,7 +799,7 @@ $this->log(MV_M_NOTICE,'AR-user(s): <b>'.count($ar_user).'</b>');
                               f.user_id = '.$ar_user[$i].' AND
                               f.alert_phase = '.ALERT_PHASE_RED;
 
-$this->log(MV_M_NOTICE,'AR-query:<br>"'.$sql.'"<br>');
+				$this->log(MV_M_DEBUG,'AR-query:<br>"'.$sql.'"<br>');
 
                 if(($atk_fleets = $this->db->queryrowset($sql)) === false) {
                     return $this->log(MV_M_DATABASE, 'Could not query attacker fleets in AR! SKIP');
@@ -1087,7 +1088,7 @@ $this->log(MV_M_NOTICE,'AY-user(s): <b>'.count($ay_user).'</b>');
                 $this->log(MV_M_DATABASE, 'Could not update move exec started data to keep move alive! CONTINUE');
             }
 
-            $this->log(MV_M_NOTICE, 'Action '.$this->move['action_code'].' executed in '.$total_processing_time.'s, but kept alive');
+            $this->log(MV_M_INFO, 'Action '.$this->move['action_code'].' executed in '.$total_processing_time.'s, but kept alive');
         }
         else {
             $sql = 'UPDATE scheduler_shipmovement
@@ -1098,7 +1099,7 @@ $this->log(MV_M_NOTICE,'AY-user(s): <b>'.count($ay_user).'</b>');
                 $this->log(MV_M_DATABASE, 'Could not update move status data! CONTINUE');
             }
 
-            $this->log(MV_M_NOTICE, 'Action '.$this->move['action_code'].' executed in '.$total_processing_time.'s');
+            $this->log(MV_M_INFO, 'Action '.$this->move['action_code'].' executed in '.$total_processing_time.'s');
         }
 
         return MV_EXEC_OK;
