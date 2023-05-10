@@ -96,7 +96,7 @@ class moves_action_34 extends moves_common {
             }
 
             if($value > 0)
-                $this->log(MV_M_NOTICE, 'Loading <b>'.$value.'</b> of '.$column);
+                $this->log(MV_M_DEBUG, 'Loading <b>'.$value.'</b> of '.$column);
 
             $this->fleet[$column] += $value;
             $this->report_load[$column] = $value;
@@ -122,7 +122,7 @@ class moves_action_34 extends moves_common {
             }
 
             if($value > 0)
-                $this->log(MV_M_NOTICE, 'Loading <b>'.$value.'</b> of '.$column);
+                $this->log(MV_M_DEBUG, 'Loading <b>'.$value.'</b> of '.$column);
 
             $this->fleet[$column] += $value;  
             $this->report_load[$column] = $value;
@@ -175,7 +175,7 @@ class moves_action_34 extends moves_common {
         if($this->move['dest'] == $this->tr_data[2]) $this->actions = &$this->tr_data[4];
         else $this->actions = &$this->tr_data[3];
 
-        $this->log(MV_M_INFO, 'Buondi! Sono quello della flotta <b>'.$this->fleet_ids[0].'</b> del Boss <b>'.$this->move['user_id'].'</b>, in arrivo sul pianeta <b>'.$this->dest['planet_id'].'</b> che appartiene a <b>'.$this->dest['user_id'].'</b> per un trasporto.');
+        $this->log(MV_M_INFO, 'Fleet <b>'.$this->fleet_ids[0].'</b> of user <b>'.$this->move['user_id'].'</b> arrived at destination planet <b>'.$this->dest['planet_id'].'</b> owner: <b>'.$this->dest['user_id'].'</b>');
 
         $sql = 'SELECT resource_1, resource_2, resource_3, resource_4, unit_1, unit_2, unit_3, unit_4, unit_5, unit_6
                 FROM ship_fleets

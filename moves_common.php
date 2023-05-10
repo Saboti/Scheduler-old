@@ -149,7 +149,10 @@ class moves_common {
     function log($level, $message) {
         global $sdl;
 
-        switch($level) {
+        switch($level) {            
+			case MV_M_INFO:
+                $sdl->info('(move_id: '.$this->mid.') '.$message);
+				break;
             case MV_M_NOTICE:
                 $sdl->warn('(move_id: '.$this->mid.') '.$message);
 				break;
@@ -171,7 +174,7 @@ class moves_common {
 				break;
 
             default:
-                $sdl->info($level.': (move_id: '.$this->mid.') '.$message);
+                $sdl->warn($level.': (move_id: '.$this->mid.') '.$message);
 				break;
         }
 
