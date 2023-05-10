@@ -109,8 +109,7 @@ class NPC
 				// Recover language of the sender
 				$sql = 'SELECT language FROM user WHERE user_id='.$message['sender'];
 				if(!($language = $this->db->queryrow($sql)))
-					$this->sdl->log('<b>Error:</b> Cannot read user language!',
-						$logfile);
+					$this->sdl->error('<b>Error:</b> Cannot read user language!');
 
 				switch($language['language'])
 				{
@@ -382,11 +381,9 @@ class NPC
 					            "'.$build_finish.'")';
 
 				if (!$this->db->query($sql))
-					$this->sdl->error('cannot add building <b>#'.$building.'</b> to the planet <b>#'.$planet['planet_id'].'</b>',
-						$logfile);
+					$this->sdl->error('cannot add building <b>#'.$building.'</b> to the planet <b>#'.$planet['planet_id'].'</b>');
 				else {
-					$this->sdl->debug('Construction of <b>#'.$building.'</b> started on planet <b>#'.$planet['planet_id'].'</b>',
-						$logfile);
+					$this->sdl->debug('Construction of <b>#'.$building.'</b> started on planet <b>#'.$planet['planet_id'].'</b>');
 					$res = BUILD_SUCCESS;
 				}
 			}
