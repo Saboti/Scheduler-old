@@ -34,7 +34,6 @@ if(!empty($_SERVER['SERVER_SOFTWARE'])) {
     echo 'The scheduler can only be called by CLI!'; exit;
 }
 
-define('TICK_LOG_FILE', $game_path . 'logs/moves_tick_'.date('d-m-Y', time()).'.log');
 define('IN_SCHEDULER', true); // wir sind im scheduler...
 
 // include commons classes and functions
