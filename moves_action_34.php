@@ -49,7 +49,7 @@ class moves_action_34 extends moves_common {
 
             if($this->actions[$code] == -1) {
                 if($this->fleet[$column] > 0)
-                    $this->log(MV_M_NOTICE, 'Unloading <b>ALL</b> the quantity on board of '.$column.' (<b>'.$this->fleet[$column].'</b>)');
+                    $this->log(MV_M_DEBUG, 'Unloading <b>ALL</b> the quantity on board of '.$column.' (<b>'.$this->fleet[$column].'</b>)');
                 $this->dest[$column] += $this->fleet[$column];
                 $this->unlwares[$i] = $this->fleet[$column];
                 $this->fleet[$column] = 0;
@@ -58,7 +58,7 @@ class moves_action_34 extends moves_common {
             else {
                 $value = ($this->fleet[$column] < $this->actions[$code]) ? $this->fleet[$column] : $this->actions[$code];
                 if($value > 0)
-                    $this->log(MV_M_NOTICE, 'Unloading <b>'.$value.'</b> of '.$column);
+                    $this->log(MV_M_DEBUG, 'Unloading <b>'.$value.'</b> of '.$column);
                 $this->dest[$column] += $value;
                 $this->fleet[$column] -= $value;
                 $this->unlwares[$i] = $value;
@@ -175,7 +175,7 @@ class moves_action_34 extends moves_common {
         if($this->move['dest'] == $this->tr_data[2]) $this->actions = &$this->tr_data[4];
         else $this->actions = &$this->tr_data[3];
 
-        $this->log(MV_M_NOTICE, 'Buondi! Sono quello della flotta <b>'.$this->fleet_ids[0].'</b> del Boss <b>'.$this->move['user_id'].'</b>, in arrivo sul pianeta <b>'.$this->dest['planet_id'].'</b> che appartiene a <b>'.$this->dest['user_id'].'</b> per un trasporto.');
+        $this->log(MV_M_INFO, 'Buondi! Sono quello della flotta <b>'.$this->fleet_ids[0].'</b> del Boss <b>'.$this->move['user_id'].'</b>, in arrivo sul pianeta <b>'.$this->dest['planet_id'].'</b> che appartiene a <b>'.$this->dest['user_id'].'</b> per un trasporto.');
 
         $sql = 'SELECT resource_1, resource_2, resource_3, resource_4, unit_1, unit_2, unit_3, unit_4, unit_5, unit_6
                 FROM ship_fleets

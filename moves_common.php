@@ -33,6 +33,7 @@ define('MV_M_NOTICE', 1);
 define('MV_M_ERROR', 2);
 define('MV_M_DATABASE', 3);
 define('MV_M_CRITICAL', 4);
+define('MV_M_DEBUG', 5);
 
 // macros for the elements of the numerical arrays returned by combat system
 define('MV_CMB_WINNER', 0);
@@ -162,6 +163,9 @@ class moves_common {
             break;
             case MV_M_CRITICAL:
                 $sdl->fatal('(move_id: '.$this->mid.') '.$message);
+            break;
+            case MV_M_DEBUG:
+                $sdl->debug('(move_id: '.$this->mid.') '.$message);
             break;
 
             default:
@@ -682,7 +686,7 @@ class moves_common {
 
         if(!empty($this->move['action_data'])) {
             $this->action_data = (array)unserialize($this->move['action_data']);
-			$this->log(MV_M_INFO, "action_data: " . print_r($this->action_data, true));
+			$this->log(MV_M_DEBUG, "action_data: " . print_r($this->action_data, true));
         }
 
         // #############################################################################
