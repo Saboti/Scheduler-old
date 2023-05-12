@@ -113,6 +113,11 @@ class NPC
 					$this->sdl->log('<b>Error:</b> Cannot read user language!',
 						$logfile);
 
+				if(!isset($language['language']))
+				{
+					$language['language'] = "GER";
+				}
+
 				switch($language['language'])
 				{
 					case 'GER':
