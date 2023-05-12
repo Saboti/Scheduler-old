@@ -184,8 +184,14 @@ class simpleGraph
         $point[$i]["x"] = $start_x+30; //x
         $point[$i]["y"] = $hoehe; //y
         
-        ImageString ($this->im, 1, $start_x, 180, $arr[$i]['name'], $this->text_color);
-        ImageString ($this->im, 1, $start_x, $hoehe-10, $arr[$i]['size'], $this->text_color);
+		if($arr[$i]['name'] != null && $arr[$i]['name'] != ''){		
+			ImageString ($this->im, 1, $start_x, 180, $arr[$i]['name'], $this->text_color);
+		}	
+		
+		if($arr[$i]['size'] != null && $arr[$i]['size'] != ''){		
+			ImageString ($this->im, 1, $start_x, $hoehe-10, $arr[$i]['size'], $this->text_color);
+		}
+		
         $start_x = $start_x + 50;
     }
     
