@@ -32,7 +32,6 @@ define('BUILD_ERR_REQUIRED', -3);
 define('BUILD_ERR_ENERGY', -4);
 define('BUILD_ERR_DB', -5);
 define('BUILD_ERR_MAXLEVEL',-6);
-define('INSTALL_LOG_FILE_NPC', 'NPC-INSTALLATION');
 
 
 // Constant for Ramona Ferengi BOT
