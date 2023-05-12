@@ -29,12 +29,11 @@
 include('config.script.php');
 include($game_path . 'include/sql.php');
 
-error_reporting(E_ERROR);
 ini_set('memory_limit', '200M');
 set_time_limit(240); // 4 minutes
 
 if(!empty($_SERVER['SERVER_SOFTWARE'])) {
-    echo 'The scheduler can only be called by CLI!'; exit;
+    //echo 'The scheduler can only be called by CLI!'; exit;
 }
 
 define('TICK_LOG_FILE', $game_path . 'logs/tick_'.date('d-m-Y', time()).'.log');
@@ -48,7 +47,7 @@ include('commons.php');
 // ########################################################################################
 // Init
 
-$starttime = ( microtime() + time() );
+$starttime = ( microtime(true) );
 
 include($game_path . 'include/global.php');
 include($game_path . 'include/functions.php');
@@ -79,12 +78,12 @@ $FUTURE_SHIP = $cfg_data['future_ship'];
 
 
 if($cfg_data['tick_stopped']) {
-    $sdl->log('Finished Scheduler in '.round((microtime()+time())-$starttime, 4).' secs<br>Tick has been stopped (Unlock in table "config")');
+    $sdl->log('Finished Scheduler in '.round((microtime(true))-$starttime, 4).' secs<br>Tick has been stopped (Unlock in table "config")');
     exit;
 }
 
 if(empty($ACTUAL_TICK)) {
-    $sdl->log('Finished Scheduler in '.round((microtime()+time())-$starttime, 4).' secs<br>- Fatal: empty($ACTUAL_TICK) == true');
+    $sdl->log('Finished Scheduler in '.round((microtime(true))-$starttime, 4).' secs<br>- Fatal: empty($ACTUAL_TICK) == true');
     exit;
 }
 
@@ -380,7 +379,7 @@ else
 
                     if (!$started)
                     {
-                        $sql[]='unittrainid_nexttime="-1"';
+                        $sql[]='unittrainid_nexttime="0"';
                     }
                 }
 
@@ -793,7 +792,9 @@ $sdl->finish_job('Future Humans Rewards');
 //BOT
 ini_set('memory_limit', '500M');
 define('FILE_PATH_hg',$game_path);
-define('TICK_LOG_FILE_NPC', $game_path.'logs/NPC_BOT_tick_'.date('d-m-Y', time()).'.log');
+define('TICK_LOG_FILE_NPC_BORG', $game_path.'logs/NPC_BOT_BORG_tick_'.date('d-m-Y', time()).'.log');
+define('TICK_LOG_FILE_NPC_FERENGI', $game_path.'logs/NPC_BOT_FERENGI_tick_'.date('d-m-Y', time()).'.log');
+define('TICK_LOG_FILE_NPC_SETTLERS', $game_path.'logs/NPC_BOT_SETTLERS_tick_'.date('d-m-Y', time()).'.log');
 include('NPC_BOT.php');
 include('ferengi.php');
 include('borg.php');
@@ -2429,7 +2430,7 @@ $sdl->finish_job('Resolve ghost fleets');
 // Quit and close log
 
 $db->close();
-$sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime()+time())-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
+$sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
 
 ?>
 

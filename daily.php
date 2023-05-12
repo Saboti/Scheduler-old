@@ -35,14 +35,14 @@ include('commons.php');
 include($game_path . 'include/global.php');
 include($game_path . 'include/functions.php');
 include($game_path . 'include/libs/maps.php');
+include($game_path . 'include/sql.php');
 
 define('TICK_LOG_FILE', $game_path . 'logs/daily.log');
 define('IN_SCHEDULER', true); // we are in the scheduler...
 
-error_reporting(E_ERROR);
-
 if(!empty($_SERVER['SERVER_SOFTWARE'])) {
-    echo 'The scheduler can only be called by CLI!'; exit;
+    echo 'The scheduler can only be called by CLI!'; 
+	exit;
 }
 
 
@@ -50,7 +50,7 @@ if(!empty($_SERVER['SERVER_SOFTWARE'])) {
 // #######################################################################################
 // Init
 
-$starttime = ( microtime() + time() );
+$starttime = ( microtime(true) );
 
 // create logging facility
 $sdl = new scheduler();
@@ -86,7 +86,7 @@ $sdl->finish_job('Reset New Registration Count');
 
 $sdl->start_job('Sitting abuse check');
 
-$sql = 'SELECT user_id,user_name,num_hits,num_sitting FROM user
+$sql = 'SELECT user_id,user_name,num_hits,num_sitting,language FROM user
         WHERE (num_sitting/(num_hits+1))>0.35 AND
               (num_sitting>50 OR (num_hits<10 AND num_sitting>30))';
 
@@ -288,7 +288,8 @@ $sdl->finish_job('Compress log files');
 // #######################################################################################
 // Clean temporary security images
 $sdl->start_job('Clean temporary security images');
-array_walk(glob($game_path."tmpsec/*.jpg"),'unlink');
+$files = glob($game_path."tmpsec/*.jpg");
+array_walk($files,'unlink');
 $sdl->finish_job('Clean temporary security images');
 
 
@@ -336,7 +337,7 @@ if ($today['mday'] == 1) {
 // Quit and close log
 
 $db->close();
-$sdl->log('<b>Finished Daily script in <font color=#009900>'.round((microtime()+time())-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
+$sdl->log('<b>Finished Daily script in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
 
 
 ?>

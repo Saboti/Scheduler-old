@@ -47,7 +47,7 @@ include('commons.php');
 // ########################################################################################
 // Init
 
-$starttime = ( microtime() + time() );
+$starttime = ( microtime(true) );
 
 include($game_path . 'include/global.php');
 include($game_path . 'include/functions.php');
@@ -55,6 +55,7 @@ include($game_path . 'include/text_races.php');
 include($game_path . 'include/race_data.php');
 include($game_path . 'include/ship_data.php');
 include($game_path . 'include/libs/moves.php');
+include($game_path . 'include/sql.php');
 
 $sdl = new scheduler();
 $db = new sql($config['server'].":".$config['port'], $config['game_database'], $config['user'], $config['password']); // create sql-object for db-connection
@@ -73,12 +74,12 @@ $LAST_TICK_TIME = ($cfg_data['tick_time']-5*60);
 $STARDATE = $cfg_data['stardate'];
 
 if($cfg_data['tick_stopped']) {
-    $sdl->log('Finished FixAll-Script in '.round((microtime()+time())-$starttime, 4).' secs<br>Tick has been stopped (Unlock in table "config")');
+    $sdl->log('Finished FixAll-Script in '.round((microtime(true))-$starttime, 4).' secs<br>Tick has been stopped (Unlock in table "config")');
     exit;
 }
 
 if(empty($ACTUAL_TICK)) {
-    $sdl->log('Finished FixAll-Script in '.round((microtime()+time())-$starttime, 4).' secs<br>- Fatal: empty($ACTUAL_TICK) == true');
+    $sdl->log('Finished FixAll-Script in '.round((microtime(true))-$starttime, 4).' secs<br>- Fatal: empty($ACTUAL_TICK) == true');
     exit;
 }
 
@@ -128,7 +129,8 @@ while($user = $db->fetchrow($q_user)) {
     }
 
     $i=0;
-
+	$count2=0;
+	
     while($planet = $db->fetchrow($q_planet)) {
         if ($planet['planet_owner_enum']!=$i) {$count++;}
         $i++;
@@ -483,6 +485,6 @@ $sdl->finish_job('Clearing invalid war declarations');
 // Quit and close log
 
 $db->close();
-$sdl->log('<b>Finished FixAll-Script in <font color=#009900>'.round((microtime()+time())-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
+$sdl->log('<b>Finished FixAll-Script in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
 
 ?>
