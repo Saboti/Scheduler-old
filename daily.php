@@ -84,7 +84,7 @@ $sdl->finish_job('Reset New Registration Count');
 
 $sdl->start_job('Sitting abuse check');
 
-$sql = 'SELECT user_id,user_name,num_hits,num_sitting FROM user
+$sql = 'SELECT user_id,user_name,num_hits,num_sitting,language FROM user
         WHERE (num_sitting/(num_hits+1))>0.35 AND
               (num_sitting>50 OR (num_hits<10 AND num_sitting>30))';
 
@@ -286,7 +286,8 @@ $sdl->finish_job('Compress log files');
 // #######################################################################################
 // Clean temporary security images
 $sdl->start_job('Clean temporary security images');
-array_walk(glob($game_path."tmpsec/*.jpg"),'unlink');
+$files = glob($game_path."tmpsec/*.jpg");
+array_walk($files,'unlink');
 $sdl->finish_job('Clean temporary security images');
 
 
