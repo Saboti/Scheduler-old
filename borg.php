@@ -1235,6 +1235,7 @@ class Borg extends NPC
 
 			$max_attack = 0;
 
+			$this->sdl->debug('USER '.$primary_target['user_id'].' has '.$threat_level.' threat level at the moment');
 			if($threat_level > 1400.0)
 			{
 				$sql = 'SELECT fleet_id, planet_id FROM ship_fleets
@@ -1282,6 +1283,17 @@ class Borg extends NPC
 				$attack_fleet_query = $this->db->query($sql);
 				$sort_string = ' AND p.planet_type NOT IN("m", "o", "p") AND planet_points < 451 ORDER BY planet_points ASC LIMIT 0,5';
 				$max_attack = 1;
+			}
+			else if($threat_level >= 0.0)
+			{
+				$sql = 'SELECT fleet_id, planet_id FROM ship_fleets
+				        WHERE npc_last_action < '.$ACTUAL_TICK.' AND
+				              user_id = '.BORG_USERID.' AND move_id = 0 AND
+				              fleet_name LIKE "%Fleet Node%"
+				        ORDER BY npc_last_action ASC LIMIT 0, 1';
+				$attack_fleet_query = $this->db->query($sql);
+				$sort_string = ' AND p.planet_type NOT IN("m", "o", "p") AND planet_points < 451 ORDER BY planet_points ASC LIMIT 0,5';
+				$max_attack = 0;
 			}
 
 			$this->sdl->debug('USER '.$primary_target['user_id'].' has '.$live_attack.' live attacks at the moment');
