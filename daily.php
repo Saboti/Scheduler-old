@@ -28,16 +28,15 @@
 // Startup Config
 
 // include game definitions, path url and so on
-include('config.script.php');
+include_once('config.script.php');
 
 // include commons classes and functions
-include('commons.php');
-include($game_path . 'include/global.php');
-include($game_path . 'include/functions.php');
-include($game_path . 'include/libs/maps.php');
-include($game_path . 'include/sql.php');
+include_once('commons.php');
+include_once($game_path . 'include/global.php');
+include_once($game_path . 'include/functions.php');
+include_once($game_path . 'include/libs/maps.php');
+include_once($game_path . 'include/sql.php');
 
-define('TICK_LOG_FILE', $game_path . 'logs/daily.log');
 define('IN_SCHEDULER', true); // we are in the scheduler...
 
 if(!empty($_SERVER['SERVER_SOFTWARE'])) {
@@ -53,7 +52,7 @@ if(!empty($_SERVER['SERVER_SOFTWARE'])) {
 $starttime = ( microtime(true) );
 
 // create logging facility
-$sdl = new scheduler();
+$sdl = new scheduler("TICK-DAILY");
 
 // create sql-object for db-connection
 $db = new sql($config['server'].":".$config['port'],
@@ -63,8 +62,7 @@ $db = new sql($config['server'].":".$config['port'],
 
 $game = new game();
 
-$sdl->log('<br><br><br><b>-------------------------------------------------------------</b><br>'.
-          '<b>Starting Daily script at '.date('d.m.y H:i:s', time()).'</b>');
+$sdl->info('Starting Daily script at '.date('d.m.y H:i:s', time()));
 
 
 // #######################################################################################
@@ -74,7 +72,7 @@ $sdl->log('<br><br><br><b>------------------------------------------------------
 $sdl->start_job('Reset New Registration Count');
 
 if(!$db->query('UPDATE config SET new_register = 0'))
-    $sdl->log('<b>Error:</b> cannot reset new registration count!');
+    $sdl->error('cannot reset new registration count!');
 
 $sdl->finish_job('Reset New Registration Count');
 
@@ -91,11 +89,11 @@ $sql = 'SELECT user_id,user_name,num_hits,num_sitting,language FROM user
               (num_sitting>50 OR (num_hits<10 AND num_sitting>30))';
 
 if(($result = $db->query($sql)) === false) {
-    $sdl->log('<b>Error:</b> cannot select user data!');
+    $sdl->error('cannot select user data!');
 }
 else {
     if(!$db->query('UPDATE user SET num_hits=0, num_sitting=0'))
-        $sdl->log('<b>Error:</b> cannot reset sitting information!');
+        $sdl->error('cannot reset sitting information!');
 
     while ($user=$db->fetchrow($result))
     {
@@ -135,9 +133,9 @@ else {
         $sql = 'UPDATE user SET num_sitting=-1 WHERE user_id='.$user['user_id'];
 
         if(!$db->query($sql))
-            $sdl->log('<b>Error:</b> cannot lock sitting for user ID '.$user['user_id'].'!');
+            $sdl->error('cannot lock sitting for user ID '.$user['user_id'].'!');
 
-        $sdl->log('User sitting locked: ID '.$user['user_id'].' Name: '.$user['user_name'].' Abuse: '.$val);
+        $sdl->info('User sitting locked: ID '.$user['user_id'].' Name: '.$user['user_name'].' Abuse: '.$val);
     }
 }
 
@@ -155,16 +153,16 @@ $maps = new maps();
 $maps->create_galaxy_detail_map();
 
 if (($destimg = ImageCreateTrueColor(150,150)) === false) {
-    $sdl->log('<b>Error:</b> problem creating image');
+    $sdl->error('problem creating image');
 }
 else {
     if(($srcimg = ImageCreateFromPNG($game_path . 'maps/images/galaxy_detail.png')) === false) {
-        $sdl->log('<b>Error:</b> problem opening source image');
+        $sdl->error('problem opening source image');
     }
     else {
         if(!ImageCopyResampled($destimg,$srcimg,0,0,0,0,150,159,
             ImageSX($srcimg),ImageSY($srcimg))) {
-            $sdl->log('<b>Error:</b> problem resizing image');
+            $sdl->error('problem resizing image');
         }
         else {
             imagepng ($destimg,$game_path . 'maps/images/galaxy_detail_small.png');
@@ -184,7 +182,7 @@ $sdl->finish_job('Create galaxy map');
 $sdl->start_job('Slimming ship movements');
 
 if(($cfg_data = $db->queryrow('SELECT * FROM config')) === false) {
-    $sdl->log('<b>Error:</b> cannot query tick data!');
+    $sdl->error('cannot query tick data!');
 }
 else {
     $ACTUAL_TICK = $cfg_data['tick_id'];
@@ -200,11 +198,11 @@ else {
                       move_exec_started <> 0';
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> cannot delete scheduler_shipmovement data!');
+            $sdl->error('cannot delete scheduler_shipmovement data!');
         }
     }
     else
-        $sdl->log('Tick has been stopped (Unlock in table "config")');
+        $sdl->info('Tick has been stopped (Unlock in table "config")');
 }
 $sdl->finish_job('Slimming ship movements');
 
@@ -232,7 +230,7 @@ $sql = 'OPTIMIZE TABLE `FHB_cache_trupp_trade`,
                        `user_diplomacy`';
 
 if(!$db->query($sql)) {
-    $sdl->log('<b>Error:</b> cannot optimize frequently shrunk tables!');
+    $sdl->error('cannot optimize frequently shrunk tables!');
 }
 
 $sdl->finish_job('Optimize tables');
@@ -266,7 +264,7 @@ foreach ($files as $key => $file) {
 
         // Open the gz file (w9 is the highest compression)
         if(($fp = gzopen ($gzfile, 'w9')) === false)
-            $sdl->log('<b>Error:</b> cannot create compressed file '.$gzfile);
+            $sdl->error('cannot create compressed file '.$gzfile);
         else {
             // Compress the file
             gzwrite ($fp, file_get_contents($file));
@@ -276,7 +274,7 @@ foreach ($files as $key => $file) {
 
             // Delete uncompressed file
             if(!unlink($file))
-                $sdl->log('<b>Error:</b> cannot remove uncompressed file '.$file);
+                $sdl->error('cannot remove uncompressed file '.$file);
         }
     }
 }
@@ -320,11 +318,11 @@ if ($today['mday'] == 1) {
         $newname = $newnames[$i];
 
         if (!rename ($oldname, $newname)) {
-            $sdl->log('<b>Error:</b> cannot rename file '.$oldname.' into '.$newname);
+            $sdl->error('cannot rename file '.$oldname.' into '.$newname);
         }
 
         if (!touch($oldname)) {
-            $sdl->log('<b>Error:</b> cannot create new empty  file '.$oldname);
+            $sdl->error('cannot create new empty  file '.$oldname);
         }
     }
     $sdl->finish_job('Rotate log files');
@@ -337,7 +335,7 @@ if ($today['mday'] == 1) {
 // Quit and close log
 
 $db->close();
-$sdl->log('<b>Finished Daily script in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
+$sdl->info('<b>Finished Daily script in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
 
 
 ?>

@@ -37,8 +37,13 @@
 // ########################################################################################
 // Startconfig of Settlers
 class Settlers extends NPC
-{
-    public function Install($log = INSTALL_LOG_FILE_NPC)
+{	
+	function __construct(&$db){
+		$sdl = new scheduler('TICK-NPC-SETTLERS');		
+        parent::__construct($db,$sdl);
+	}
+	
+    public function Install($log = '')
     {
         $this->sdl->start_job('Mayflower basic system', $log);
 
@@ -47,7 +52,7 @@ class Settlers extends NPC
 
         //Check whether the bot already lives
         if(empty($this->bot['user_id'])) {
-            $this->sdl->log('We need to create TheSettlers!', $log);
+            $this->sdl->info('We need to create TheSettlers!', $log);
 
             $sql = 'INSERT INTO user (user_id, user_auth_level, user_name, user_loginname, user_password,
                                       user_email, user_active, user_race, user_gfxpath, user_skinpath,
@@ -60,14 +65,14 @@ class Settlers extends NPC
                                  "",  "", "", "", "")';
 
             if(!$this->db->query($sql)) {
-                $this->sdl->log('<b>Error:</b> could not create TheSettlers - ABORTED', $log);
+                $this->sdl->error('could not create TheSettlers - ABORTED', $log);
             }
         }
 
         //Check for Settlers cargo ship definition
         $settler_ship_id = $this->db->queryrow('SELECT settler_tmp_1 FROM config WHERE config_set_id = 0');
         if(empty($settler_ship_id['settler_tmp_1'])) {
-               $this->sdl->log('Writing Settler Cargo Ship!', $log);
+               $this->sdl->info('Writing Settler Cargo Ship!', $log);
 
                $sql = 'INSERT INTO ship_templates (owner, timestamp, name, description, race, ship_torso, ship_class,
                                                 component_1, component_2, component_3, component_4, component_5,
@@ -91,7 +96,7 @@ class Settlers extends NPC
                              720, 1, 0, 0)';
 
                if(!$this->db->query($sql)) {
-                    $this->sdl->log('<b>Error:</b> could not create TheSettlers - ABORTED', $log);
+                    $this->sdl->error('could not create TheSettlers - ABORTED', $log);
                }
 
                $template_id = $this->db->insert_id();
@@ -102,7 +107,7 @@ class Settlers extends NPC
         //Check for Settlers cruiser ship definition
         $settler_ship_id = (int)$this->db->queryrow('SELECT settler_tmp_2 FROM config WHERE config_set_id = 0');
         if(empty($settler_ship_id['settler_tmp_2'])) {
-               $this->sdl->log('Writing Settler Cruiser Ship!', $log);
+               $this->sdl->info('Writing Settler Cruiser Ship!', $log);
 
                $sql = 'INSERT INTO ship_templates (owner, timestamp, name, description, race, ship_torso, ship_class,
                                                 component_1, component_2, component_3, component_4, component_5,
@@ -126,7 +131,7 @@ class Settlers extends NPC
                              1121, 6, 4, 85)';
 
                if(!$this->db->query($sql)) {
-                    $this->sdl->log('<b>Error:</b> could not create TheSettlers - ABORTED', $log);
+                    $this->sdl->error('could not create TheSettlers - ABORTED', $log);
                }
 
                $template_id = $this->db->insert_id();
@@ -137,7 +142,7 @@ class Settlers extends NPC
         //Check for Settlers battleship ship definition
         $settler_ship_id = (int)$this->db->queryrow('SELECT settler_tmp_3 FROM config WHERE config_set_id = 0');
         if(empty($settler_ship_id['settler_tmp_3'])) {
-               $this->sdl->log('Writing Settler Heavy Cruiser!', $log);
+               $this->sdl->info('Writing Settler Heavy Cruiser!', $log);
 
                $sql = 'INSERT INTO ship_templates (owner, timestamp, name, description, race, ship_torso, ship_class,
                                                 component_1, component_2, component_3, component_4, component_5,
@@ -161,7 +166,7 @@ class Settlers extends NPC
                              2528, 15, 8, 250)';
 
                if(!$this->db->query($sql)) {
-                    $this->sdl->log('<b>Error:</b> could not create TheSettlers - ABORTED', $log);
+                    $this->sdl->error('could not create TheSettlers - ABORTED', $log);
                }
 
                $template_id = $this->db->insert_id();
@@ -172,7 +177,7 @@ class Settlers extends NPC
         //Check for Settlers Orbital Cannon definition
         $settler_ship_id = (int)$this->db->queryrow('SELECT settler_tmp_4 FROM config WHERE config_set_id = 0');
         if(empty($settler_ship_id['settler_tmp_4'])) {
-               $this->sdl->log('Writing Settler Orbital!', $log);
+               $this->sdl->info('Writing Settler Orbital!', $log);
 
                $sql = 'INSERT INTO ship_templates (owner, timestamp, name, description, race, ship_torso, ship_class,
                                                 component_1, component_2, component_3, component_4, component_5,
@@ -196,7 +201,7 @@ class Settlers extends NPC
                              480, 3, 400)';
 
                if(!$this->db->query($sql)) {
-                    $this->sdl->log('<b>Error:</b> could not create TheSettlers - ABORTED', $log);
+                    $this->sdl->error('could not create TheSettlers - ABORTED', $log);
                }
 
                $template_id = $this->db->insert_id();
@@ -210,10 +215,9 @@ class Settlers extends NPC
     public function Execute($debug=0)
     {
         global $ACTUAL_TICK,$cfg_data,$RACE_DATA;
-        $starttime = ( microtime(true) + time() );
+        $starttime = ( microtime(true) );
 
-        $this->sdl->log('<br><b>-------------------------------------------------------------</b><br>'.
-            '<b>Starting Settlers Bot Scheduler at '.date('d.m.y H:i:s', time()).'</b>', TICK_LOG_FILE_NPC_SETTLERS);
+        $this->sdl->info('Starting Settlers Bot Scheduler at '.date('d.m.y H:i:s', time()));
 
         // Update BOT user ID
         $this->bot['user_id'] = INDEPENDENT_USERID;
@@ -221,26 +225,31 @@ class Settlers extends NPC
         // ########################################################################################
         // ########################################################################################
         // Messages answer
+        $this->sdl->start_job('Mayflower Messages');
         $messages=array('Bot system.','Bot system.','Se desiderate avere contatti con noi, dovrete scendere direttamente su uno dei nostri pianeti.<br><br>A presto.');
         $titles=array('--','--','Grazie per averci contattato.');
 
-        $this->ReplyToUser($titles,$messages, TICK_LOG_FILE_NPC_SETTLERS);
+        $this->ReplyToUser($titles,$messages);
+        $this->sdl->finish_job('Mayflower Messages');
+		
         // ########################################################################################
         // ########################################################################################
         // Read Logbook
-
-        $this->ReadLogbook(TICK_LOG_FILE_NPC_SETTLERS);
+        $this->sdl->start_job('Mayflower Logbook');
+        $this->ReadLogbook();
+        $this->sdl->finish_job('Mayflower Logbook');
+		
         // ########################################################################################
         // ########################################################################################
         // Ok, only three (3) Settlers' planets per run are going to wake up. More planets means more overhead.
 
-        $this->sdl->start_job('Mayflower Planets Building Control', TICK_LOG_FILE_NPC_SETTLERS);
+        $this->sdl->start_job('Mayflower Planets Building Control');
 
         $sql='SELECT * FROM planets WHERE planet_owner = '.INDEPENDENT_USERID.' AND npc_last_action < '.$ACTUAL_TICK.' ORDER BY npc_last_action ASC LIMIT 0, 3';
 
         if(($setpoint = $this->db->query($sql)) === false)
         {
-            $this->sdl->log('<b>Error:</b> Bot: Could not read planets DB', TICK_LOG_FILE_NPC_SETTLERS);
+            $this->sdl->error('Bot: Could not read planets DB');
         }
         else
         {
@@ -250,40 +259,40 @@ class Settlers extends NPC
                 if($planet_to_serve['building_1'] < 9)
                 {
                     $sql = 'UPDATE planets SET building_1 = 9, npc_last_action = '.$ACTUAL_TICK.' WHERE planet_id = '.$planet_to_serve['planet_id'];
-                    $this->sdl->log('SQL 1.1 '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL 1.1 '.$sql);
                     $this->db->query($sql);
                     continue;
                 }
                 if($planet_to_serve['building_5'] < 6)
                 {
                     $sql = 'UPDATE planets SET building_5 = 6, npc_last_action = '.$ACTUAL_TICK.' WHERE planet_id = '.$planet_to_serve['planet_id'];
-                    $this->sdl->log('SQL 1'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL 1.5'.$sql);
                     $this->db->query($sql);
                     continue;
                 }
                 if($planet_to_serve['building_2'] < 9)
                 {
                     $sql = 'UPDATE planets SET building_2 = 9, npc_last_action = '.$ACTUAL_TICK.', recompute_static = 1 WHERE planet_id = '.$planet_to_serve['planet_id'];
-                    $this->sdl->log('SQL 1.2'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL 1.2'.$sql);
                     $this->db->query($sql);
                     continue;
                 }if($planet_to_serve['building_3'] < 9)
                 {
                     $sql = 'UPDATE planets SET building_3 = 9, npc_last_action = '.$ACTUAL_TICK.', recompute_static = 1 WHERE planet_id = '.$planet_to_serve['planet_id'];
-                    $this->sdl->log('SQL 1.3'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL 1.3'.$sql);
                     $this->db->query($sql);
                     continue;
                 }if($planet_to_serve['building_4'] < 9)
                 {
                     $sql = 'UPDATE planets SET building_4 = 9, npc_last_action = '.$ACTUAL_TICK.', recompute_static = 1 WHERE planet_id = '.$planet_to_serve['planet_id'];
-                    $this->sdl->log('SQL 1.4'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL 1.4'.$sql);
                     $this->db->query($sql);
                     continue;
                 }
                 if($planet_to_serve['building_12'] < 9)
                 {
                     $sql = 'UPDATE planets SET building_12 = 9, npc_last_action = '.$ACTUAL_TICK.', recompute_static = 1 WHERE planet_id = '.$planet_to_serve['planet_id'];
-                    $this->sdl->log('SQL 1.12'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL 1.12'.$sql);
                     $this->db->query($sql);
                     continue;
                 }
@@ -291,7 +300,7 @@ class Settlers extends NPC
                 if($planet_to_serve['building_6'] < 9)
                 {
                     $sql = 'UPDATE planets SET building_6 = 9, npc_last_action = '.$ACTUAL_TICK.', recompute_static = 1 WHERE planet_id = '.$planet_to_serve['planet_id'];
-                    $this->sdl->log('SQL 2'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL 2'.$sql);
                     $this->db->query($sql);
                     continue;
                 }
@@ -350,7 +359,7 @@ class Settlers extends NPC
                 if($planet_to_serve['workermine_1'] < 1000 || $planet_to_serve['workermine_2'] < 1000 || $planet_to_serve['workermine_3'] < 1000)
                 {
                     $sql = 'UPDATE planets SET workermine_1 = 1000, workermine_2 = 1000, workermine_3 = 1000, npc_last_action = '.$ACTUAL_TICK.', recompute_static = 1 WHERE planet_id = '.$planet_to_serve['planet_id'];
-                    $this->sdl->log('SQL 7'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL 7'.$sql);
                     $this->db->query($sql);
                     continue;
                 }
@@ -361,7 +370,7 @@ class Settlers extends NPC
                 if($troops_to_train > 0)
                 {
                     $sql = 'UPDATE planets SET unit_3 = unit_3 + '.$troops_to_train.', npc_last_action = '.$ACTUAL_TICK.', recompute_static = 1 WHERE planet_id = '.$planet_to_serve['planet_id'];
-                    $this->sdl->log('SQL 7.1'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL 7.1'.$sql);
                     $this->db->query($sql);
                     continue;
                 }
@@ -436,7 +445,7 @@ class Settlers extends NPC
                                    unittrain_actual = 1, unittrainid_nexttime = '.($ACTUAL_TICK + 2).',
                                    npc_last_action = '.$ACTUAL_TICK.'
                             WHERE planet_id = '.$planet_to_serve['planet_id'];
-                    $this->sdl->log('SQL A - 1A '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL A - 1A '.$sql);
                     $this->db->query($sql);
                     continue;
                 }
@@ -472,7 +481,7 @@ class Settlers extends NPC
                                    unittrain_actual = 1, unittrainid_nexttime = '.($ACTUAL_TICK + 2).',
                                    npc_last_action = '.$ACTUAL_TICK.'
                             WHERE planet_id = '.$planet_to_serve['planet_id'];
-                    $this->sdl->log('SQL A - 1B '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL A - 1B '.$sql);
                     $this->db->query($sql);
                     continue;
                 }
@@ -484,13 +493,13 @@ class Settlers extends NPC
                 if(isset($notpayed['ship_id']) && !empty($notpayed['ship_id']))
                 {
                     $sql='DELETE FROM FHB_warteschlange WHERE ship_id = '.$notpayed['ship_id'];
-                    $this->sdl->log('SQL A - 6A '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL A - 6A '.$sql);
                     $this->db->query($sql);
                     $sql='UPDATE ships SET user_id = '.INDEPENDENT_USERID.', fleet_id = -'.$planet_to_serve['planet_id'].' WHERE ship_id = '.$notpayed['ship_id'];
-                    $this->sdl->log('SQL A - 6B '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL A - 6B '.$sql);
                     $this->db->query($sql);
                     $sql = 'UPDATE planets SET npc_last_action = '.($ACTUAL_TICK + 20).' WHERE planet_id = '.$planet_to_serve['planet_id'];
-                    $this->sdl->log('SQL A - 6C '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL A - 6C '.$sql);
                     $this->db->query($sql);
                     continue;
                 }
@@ -527,18 +536,18 @@ class Settlers extends NPC
                         // $setl_bf = $this->db->queryrow($sql);
                         $sql='INSERT INTO ship_fleets (fleet_name, user_id, planet_id, move_id, n_ships)
                                      VALUES ("Reinforcement", '.$planet_to_serve['best_mood_user'].', '.$planet_to_serve['planet_id'].', 0, 1)';
-                        $this->sdl->log('SQL A - 2.A1 '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                        $this->sdl->debug('SQL A - 2.A1 '.$sql);
                         $this->db->query($sql);
                         $fleet_id = $this->db->insert_id();
                         $sql = 'UPDATE ships SET user_id = '.$planet_to_serve['best_mood_user'].', fleet_id = '.$fleet_id.' WHERE ship_id='.$t_q['ship_id'];
-                        $this->sdl->log('SQL A - 2.A2 '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                        $this->sdl->debug('SQL A - 2.A2 '.$sql);
                         $this->db->query($sql);
                         //Here we need multilanguage customization
                         $log_title = 'Nuova unit&agrave; disponibile dalla colonia indipendente '.$planet_to_serve['planet_name'];
                         $log_data = array($planet_to_serve['planet_id'], $planet_to_serve['planet_name'], $t_q['ship_id'], $t_q['name'], 0, 0);
                         add_logbook_entry($planet_to_serve['best_mood_user'], LOGBOOK_SETTLERS, $log_title, $log_data);
                         $sql = 'UPDATE planets SET npc_last_action = '.($ACTUAL_TICK + 20).' WHERE planet_id = '.$planet_to_serve['planet_id'];
-                        $this->sdl->log('SQL A - 2.A5 '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                        $this->sdl->debug('SQL A - 2.A5 '.$sql);
                         $this->db->query($sql);
                         continue;
                     }
@@ -553,7 +562,7 @@ class Settlers extends NPC
                         $_ress_3_step = round($t_q['resource_3']*0.03);
                         $sql = 'INSERT INTO ship_trade (user,planet,start_time,end_time,ship_id,resource_1,resource_2,resource_3,unit_1,unit_2,unit_3,unit_4,unit_5,unit_6,add_resource_1,add_resource_2,add_resource_3,add_unit_1,add_unit_2,add_unit_3,add_unit_4,add_unit_5,add_unit_6,header,description,show_data,font_bold,font_colored,unowed_only)
                                 VALUES   ('.INDEPENDENT_USERID.','.$planet_to_serve['planet_id'].','.$ACTUAL_TICK.','.($ACTUAL_TICK + 480).','.$t_q['ship_id'].','.$_ress_1.','.$_ress_2.','.$_ress_3.', 0, 0, 0, 0,'.$t_q['unit_5'].','.$t_q['unit_6'].','.$_ress_1_step.','.$_ress_2_step.','.$_ress_3_step.',0,0,0,0,0,0,"'.$t_q['name'].'","This is an automatic generated auction for a ship held by the Settlers Community!!!",2,1,1,0)';
-                        $this->sdl->log('SQL A - 2.B1 '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                        $this->sdl->debug('SQL A - 2.B1 '.$sql);
                         $this->db->query($sql);
                         $sql = 'UPDATE ships SET ship_untouchable=1 WHERE ship_id='.$t_q['ship_id'];
                         $this->db->query($sql);
@@ -561,7 +570,7 @@ class Settlers extends NPC
                         $sql = 'UPDATE user SET num_auctions=num_auctions+1 WHERE user_id='.INDEPENDENT_USERID;
                         $this->db->query($sql);
                         $sql = 'UPDATE planets SET npc_last_action = '.($ACTUAL_TICK + 20).' WHERE planet_id = '.$planet_to_serve['planet_id'];
-                        $this->sdl->log('SQL A - 2.B2 '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                        $this->sdl->debug('SQL A - 2.B2 '.$sql);
                         $this->db->query($sql);
                         continue;
                     }
@@ -597,7 +606,7 @@ class Settlers extends NPC
                             $avail_tick = mt_rand(23,420);
                             $avail_tick = $avail_tick + $ACTUAL_TICK;
                             $sql = 'INSERT INTO `FHB_cache_trupp_trade` (`unit_1` , `unit_2` , tick ) VALUES ('.$_unit_1_cut.', '.$_unit_2_cut.', '.$avail_tick.')';                                                        
-                            $this->sdl->log('SQL A - 4.0.3.0'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                            $this->sdl->debug('SQL A - 4.0.3.0'.$sql);
                             $this->db->query($sql);
                             // This is tricky!!!
                             // Il pianeta indicato in best_mood_planet potrebbe non appartenere più al giocatore, tuttavia
@@ -620,7 +629,7 @@ class Settlers extends NPC
                             }
                             $sql = 'INSERT INTO scheduler_resourcetrade (planet,resource_1,resource_2,resource_3,resource_4,unit_1,unit_2,unit_3,unit_4,unit_5,unit_6,arrival_time)
                                 VALUES ('.$target_planet.', 0, 0, 0, '.$_ress_4.', '.($_unit_1 - $_unit_1_cut).', '.($_unit_2 - $_unit_2_cut).', 0, 0, 0, 0, '.($ACTUAL_TICK + 120).')';
-                            $this->sdl->log('SQL A - 4.0.1'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                            $this->sdl->debug('SQL A - 4.0.1'.$sql);
                             $this->db->query($sql);
                             $sql = 'UPDATE planets SET npc_last_action = '.($ACTUAL_TICK + 20).',
                                        npc_next_delivery = '.($ACTUAL_TICK + 480).',
@@ -628,7 +637,7 @@ class Settlers extends NPC
                                        unit_1 = '.$planet_to_serve['unit_1'].',
                                        unit_2 = '.$planet_to_serve['unit_2'].'
                                     WHERE planet_id = '.$planet_to_serve['planet_id'];
-                            $this->sdl->log('SQL A - 4.0.2'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                            $this->sdl->debug('SQL A - 4.0.2'.$sql);
                             $this->db->query($sql);
                             $log_data[8]['unit_1'] = $_unit_1 - $_unit_1_cut;
                             $log_data[8]['unit_2'] = $_unit_2 - $_unit_2_cut;
@@ -642,14 +651,14 @@ class Settlers extends NPC
                             $avail_tick = mt_rand(23,420);
                             $avail_tick = $avail_tick + $ACTUAL_TICK;
                             $sql = 'INSERT INTO `FHB_cache_trupp_trade` (`unit_1` , `unit_2` , tick ) VALUES ('.$_unit_1.', '.$_unit_2.', '.$avail_tick.')';                            
-                            $this->sdl->log('SQL A - 4.1.1'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                            $this->sdl->debug('SQL A - 4.1.1'.$sql);
                             $this->db->query($sql);
                             $sql = 'UPDATE planets SET npc_last_action = '.($ACTUAL_TICK + 20).',
                                        npc_next_delivery = '.($ACTUAL_TICK + 480).',                                
                                        unit_1 = '.$planet_to_serve['unit_1'].',
                                        unit_2 = '.$planet_to_serve['unit_2'].'
                                     WHERE planet_id = '.$planet_to_serve['planet_id'];
-                            $this->sdl->log('SQL A - 4.1.2'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                            $this->sdl->debug('SQL A - 4.1.2'.$sql);
                             $this->db->query($sql);
                             continue;
                         }
@@ -683,7 +692,7 @@ class Settlers extends NPC
                             $avail_tick = mt_rand(23,420);
                             $avail_tick = $avail_tick + $ACTUAL_TICK;
                             $sql = 'INSERT INTO `FHB_cache_trupp_trade` (`unit_5` , `unit_6` , tick ) VALUES ('.$_unit_5_cut.', '.$_unit_6_cut.', '.$avail_tick.')';                            
-                            $this->sdl->log('SQL A - 4.0.3'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                            $this->sdl->debug('SQL A - 4.0.3'.$sql);
                             $this->db->query($sql);
                             $log_title = 'Truppe in arrivo dalla colonia '.$planet_to_serve['planet_name'];
                             $log_data = array($planet_to_serve['planet_id'], $planet_to_serve['planet_name'], 0, 0, 101, 0);                            
@@ -703,7 +712,7 @@ class Settlers extends NPC
                             }
                             $sql = 'INSERT INTO scheduler_resourcetrade (planet,resource_1,resource_2,resource_3,resource_4,unit_1,unit_2,unit_3,unit_4,unit_5,unit_6,arrival_time)
                                 VALUES ('.$target_planet.', 0, 0, 0, '.$_ress_4.', 0, 0, 0, 0, '.($_unit_5 - $_unit_5_cut).', '.($_unit_6 - $_unit_6_cut).', '.($ACTUAL_TICK + 120).')';
-                            $this->sdl->log('SQL A - 4.3.1'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                            $this->sdl->debug('SQL A - 4.3.1'.$sql);
                             $this->db->query($sql);
                             $sql = 'UPDATE planets SET npc_last_action = '.($ACTUAL_TICK + 20).',
                                        npc_next_delivery = '.($ACTUAL_TICK + 480).',                                
@@ -711,7 +720,7 @@ class Settlers extends NPC
                                        unit_5 = '.$planet_to_serve['unit_5'].',
                                        unit_6 = '.$planet_to_serve['unit_6'].'
                                     WHERE planet_id = '.$planet_to_serve['planet_id'];
-                            $this->sdl->log('SQL A - 4.3.2'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                            $this->sdl->debug('SQL A - 4.3.2'.$sql);
                             $this->db->query($sql);
                             $log_data[8]['unit_5'] = $_unit_5 - $_unit_5_cut;
                             $log_data[8]['unit_6'] = $_unit_6 - $_unit_6_cut;
@@ -725,14 +734,14 @@ class Settlers extends NPC
                             $avail_tick = mt_rand(23,420);
                             $avail_tick = $avail_tick + $ACTUAL_TICK;
                             $sql = 'INSERT INTO `FHB_cache_trupp_trade` (`unit_5` , `unit_6` , tick ) VALUES ('.$_unit_5.', '.$_unit_6.', '.$avail_tick.')';
-                            $this->sdl->log('SQL A - 4.4.1'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                            $this->sdl->debug('SQL A - 4.4.1'.$sql);
                             $this->db->query($sql);
                             $sql = 'UPDATE planets SET npc_last_action = '.($ACTUAL_TICK + 20).',
                                        npc_next_delivery = '.($ACTUAL_TICK + 480).',                                
                                        unit_5 = '.$planet_to_serve['unit_5'].',
                                        unit_6 = '.$planet_to_serve['unit_6'].'
                                     WHERE planet_id = '.$planet_to_serve['planet_id'];
-                            $this->sdl->log('SQL A - 4.4.2'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                            $this->sdl->debug('SQL A - 4.4.2'.$sql);
                             $this->db->query($sql);
                             continue;
                         }
@@ -816,7 +825,7 @@ class Settlers extends NPC
                     {
                     	// Ships the cut to the tradecenter
                         $sql = 'UPDATE FHB_Handels_Lager SET ress_1=ress_1+'.$_ress_1_cut.',ress_2=ress_2+'.$_ress_2_cut.',ress_3=ress_3+'.$_ress_3_cut.' WHERE id=1';
-                        $this->sdl->log('SQL A - 4.7'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                        $this->sdl->debug('SQL A - 4.7'.$sql);
                     	$this->db->query($sql);
 
                         if($planet_to_serve['best_mood'] >= 120)
@@ -839,7 +848,7 @@ class Settlers extends NPC
                             }
                             $sql = 'INSERT INTO scheduler_resourcetrade (planet,resource_1,resource_2,resource_3,resource_4,unit_1,unit_2,unit_3,unit_4,unit_5,unit_6,arrival_time)
                                            VALUES ('.$target_planet.', '.($_ress_1 - $_ress_1_cut).', '.($_ress_2 - $_ress_2_cut).', '.($_ress_3 - $_ress_3_cut).', 0, 0, 0, 0, 0, 0, 0, '.($ACTUAL_TICK + 120).')';
-                            $this->sdl->log('SQL A - 4.5.1'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                            $this->sdl->debug('SQL A - 4.5.1'.$sql);
                             $this->db->query($sql);
                             $sql = 'UPDATE planets SET npc_last_action = '.($ACTUAL_TICK + 20).',
                                         npc_next_delivery = '.($ACTUAL_TICK + 480).',                                
@@ -847,7 +856,7 @@ class Settlers extends NPC
                                         resource_2 = '.$planet_to_serve['resource_2'].',
                                         resource_3 = '.$planet_to_serve['resource_3'].'
                                     WHERE planet_id = '.$planet_to_serve['planet_id'];
-                            $this->sdl->log('SQL A - 4.5.2'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                            $this->sdl->debug('SQL A - 4.5.2'.$sql);
                             $this->db->query($sql);
                             $log_data[8]['ress_1'] = $_ress_1 - $_ress_1_cut;
                             $log_data[8]['ress_2'] = $_ress_2 - $_ress_2_cut;
@@ -858,7 +867,7 @@ class Settlers extends NPC
                         else
                         {
                             $sql = 'UPDATE FHB_Handels_Lager SET ress_1=ress_1+'.$_ress_1.',ress_2=ress_2+'.$_ress_2.',ress_3=ress_3+'.$_ress_3.' WHERE id=1';
-                            $this->sdl->log('SQL A - 4.6.1'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                            $this->sdl->debug('SQL A - 4.6.1'.$sql);
                             $this->db->query($sql);
                             $sql = 'UPDATE planets SET npc_last_action = '.($ACTUAL_TICK + 20).',
                                         npc_next_delivery = '.($ACTUAL_TICK + 480).',
@@ -866,7 +875,7 @@ class Settlers extends NPC
                                         resource_2 = '.$planet_to_serve['resource_2'].',
                                         resource_3 = '.$planet_to_serve['resource_3'].'
                                     WHERE planet_id = '.$planet_to_serve['planet_id'];
-                            $this->sdl->log('SQL A - 4.6.2'.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                            $this->sdl->debug('SQL A - 4.6.2'.$sql);
                             $this->db->query($sql);
                             continue;
                         }
@@ -907,10 +916,10 @@ class Settlers extends NPC
                         $_buildtime *= (100-2*($planet_to_serve['research_4']*$RACE_DATA[13][3]));
                         $_buildtime = round($_buildtime,0);                        
                         $sql = 'INSERT INTO scheduler_shipbuild SET ship_type = '.$cfg_data['settler_tmp_2'].', planet_id = '.$planet_to_serve['planet_id'].', start_build = '.$ACTUAL_TICK.', finish_build = '.($ACTUAL_TICK + $_buildtime).', unit_1 = 100, unit_2 = 0, unit_3 = 0, unit_4 = 2';
-                        $this->sdl->log('SQL A - 3.1 '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                        $this->sdl->debug('SQL A - 3.1 '.$sql);
                         $this->db->query($sql);
                         $sql = 'UPDATE planets SET npc_last_action = '.($ACTUAL_TICK + 20).' WHERE planet_id = '.$planet_to_serve['planet_id'];
-                        $this->sdl->log('SQL A - 3.2 '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                        $this->sdl->debug('SQL A - 3.2 '.$sql);
                         $this->db->query($sql);
                         continue;
                     }
@@ -928,10 +937,10 @@ class Settlers extends NPC
                         $_buildtime *= (100-2*($planet_to_serve['research_4']*$RACE_DATA[13][3]));
                         $_buildtime = round($_buildtime,0);                          
                         $sql = 'INSERT INTO scheduler_shipbuild SET ship_type = '.$cfg_data['settler_tmp_3'].', planet_id = '.$planet_to_serve['planet_id'].', start_build = '.$ACTUAL_TICK.', finish_build = '.($ACTUAL_TICK + $_buildtime).', unit_1 = 150, unit_2 = 0, unit_3 = 0, unit_4 = 3';
-                        $this->sdl->log('SQL A - 3.3 '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                        $this->sdl->debug('SQL A - 3.3 '.$sql);
                         $this->db->query($sql);
                         $sql = 'UPDATE planets SET npc_last_action = '.($ACTUAL_TICK + 20).' WHERE planet_id = '.$planet_to_serve['planet_id'];
-                        $this->sdl->log('SQL A - 3.4 '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                        $this->sdl->debug('SQL A - 3.4 '.$sql);
                         $this->db->query($sql);
                         continue;
                     }
@@ -957,7 +966,7 @@ class Settlers extends NPC
                         $ticks *= (100-2*($planet_to_serve['research_4']*$RACE_DATA[13][3]));
                         $ticks = round($ticks,0);
                         $sql = 'UPDATE planets SET npc_last_action = '.($ACTUAL_TICK + $ticks).' WHERE planet_id = '.$planet_to_serve['planet_id'];
-                        $this->sdl->log('SQL A - 5.1 '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                        $this->sdl->debug('SQL A - 5.1 '.$sql);
                         $this->db->query($sql);
                         continue;
                     }
@@ -978,38 +987,37 @@ class Settlers extends NPC
                     $ticks *= (100-2*($planet_to_serve['research_4']*$RACE_DATA[13][3]));
                     $ticks = round($ticks,0);                    
                     $sql = 'UPDATE planets SET npc_last_action = '.($ACTUAL_TICK + $ticks).' WHERE planet_id = '.$planet_to_serve['planet_id'];
-                    $this->sdl->log('SQL A - 5.0 '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                    $this->sdl->debug('SQL A - 5.0 '.$sql);
                     $this->db->query($sql);
                     continue;
                 }
                 
                 $sql = 'UPDATE planets SET npc_last_action = '.($ACTUAL_TICK + 20).' WHERE planet_id = '.$planet_to_serve['planet_id'];
-                $this->sdl->log('SQL E '.$sql, TICK_LOG_FILE_NPC_SETTLERS);
+                $this->sdl->debug('SQL E '.$sql);
                 $this->db->query($sql);
             }
         }
 
-        $this->sdl->finish_job('Mayflower Planets Building Control', TICK_LOG_FILE_NPC_SETTLERS);
+        $this->sdl->finish_job('Mayflower Planets Building Control');
         // ########################################################################################
         // ########################################################################################
         // Auctions clean-up
 
-        $this->sdl->start_job('Mayflower auctions clean-up', TICK_LOG_FILE_NPC_SETTLERS);
+        $this->sdl->start_job('Mayflower auctions clean-up',);
 
         // Set to "every resources withdrawn" on Settler's paid auctions
         $sql = 'UPDATE schulden_table SET status=2
                 WHERE user_ver = '.INDEPENDENT_USERID.' AND status = 1';
         if(!$this->db->query($sql)) {
-            $this->sdl->log('<b>Error:</b> cannot update status to "resources withdrawn" for Settlers auctions',
-                TICK_LOG_FILE_NPC_SETTLERS);
+            $this->sdl->error('Cannot update status to "resources withdrawn" for Settlers auctions');
         }
 
-        $this->sdl->finish_job('Mayflower auctions clean-up', TICK_LOG_FILE_NPC_SETTLERS);
+        $this->sdl->finish_job('Mayflower auctions clean-up');
 
         // ########################################################################################
         // ########################################################################################
 
-        $this->sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$this->db->i_query.'</font></b>', TICK_LOG_FILE_NPC_SETTLERS);
+        $this->sdl->info('Finished Scheduler in '.round((microtime(true))-$starttime, 4).' secs. Executed Queries: '.$this->db->i_query);
     }
 }
 

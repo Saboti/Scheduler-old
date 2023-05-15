@@ -53,11 +53,10 @@ class NPC
 
 		if ($this->db->query($sql)==false)
 		{
-			$this->sdl->log('<b>Error:</b> Cannot send message to user '.$receiver.'!',
-				TICK_LOG_FILE_NPC);
+			$this->sdl->error('Cannot send message to user '.$receiver.'!');
 		}
-		$this->sdl->log("Senderid:".$sender." // Receiverid:".$receiver,
-			TICK_LOG_FILE_NPC);
+		
+		$this->sdl->debug("Senderid:".$sender." // Receiverid:".$receiver);
 
 		$num=$this->db->queryrow('SELECT COUNT(id) as unread FROM message
 		                          WHERE (receiver="'.$receiver.'") AND (rread=0)');
@@ -65,14 +64,14 @@ class NPC
 			$this->db->query('UPDATE user SET unread_messages="'.$num['unread'].'"
 			                  WHERE user_id="'.$receiver.'"');
 
-		$this->sdl->log("Num:".$num['unread'], TICK_LOG_FILE_NPC);
+		$this->sdl->info("Num:".$num['unread']);
 
 		return true;
 	}
 
-	function ChangePassword($log = TICK_LOG_FILE_NPC)
+	function ChangePassword()
 	{
-		$this->sdl->start_job('PW change', $log);
+		$this->sdl->start_job('PW change');
 		$new=rand(1,9);
 		$random="vv";
 		if($new==2) $new='v'.$random.'h';
@@ -87,36 +86,30 @@ class NPC
 		if($this->db->query('UPDATE `user` SET `user_password`=MD5("'.$new.'")
 		                     WHERE `user_id` ='.$this->bot['user_id']))
 		{
-			$this->sdl->log('Now there are only One-Night-Stands, no longer relations',
-				$log);
+			$this->sdl->debug('Now there are only One-Night-Stands, no longer relations');
 		}
-		$this->sdl->finish_job('PW change', $log);
+		$this->sdl->finish_job('PW change');
 	}
 
-	function ReplyToUser($titles,$messages, $logfile = TICK_LOG_FILE_NPC)
+	function ReplyToUser($titles,$messages)
 	{
-		$this->sdl->start_job('Messages answer', $logfile);
+		$this->sdl->start_job('Messages answer');
 		$msgs_number=0;
 		$sql = 'SELECT sender FROM message
 		        WHERE receiver='.$this->bot['user_id'].' AND rread=0';
 
 		if(!$q_message = $this->db->query($sql))
 		{
-			$this->sdl->log('<b>Error:</b> IGM: Could not query messages',
-				$logfile);
-		}else{
+			$this->sdl->error('IGM: Could not query messages');
+		}
+		else
+		{
 			while($message = $this->db->fetchrow($q_message))
 			{
 				// Recover language of the sender
 				$sql = 'SELECT language FROM user WHERE user_id='.$message['sender'];
 				if(!($language = $this->db->queryrow($sql)))
-					$this->sdl->log('<b>Error:</b> Cannot read user language!',
-						$logfile);
-
-				if(!isset($language['language']))
-				{
-					$language['language'] = "GER";
-				}
+					$this->sdl->error('<b>Error:</b> Cannot read user language!');
 
 				switch($language['language'])
 				{
@@ -140,21 +133,21 @@ class NPC
 		}
 		$sql = 'UPDATE message SET rread=1 WHERE receiver='.$this->bot['user_id'];
 		if(!$this->db->query($sql))
-			$this->sdl->log('<b>Error:</b> Message could not set to read', $logfile);
-		$this->sdl->log('Number of messages:'.$msgs_number, $logfile);
-		$this->sdl->finish_job('Messages answer', $logfile);
+			$this->sdl->error('Message could not set to read');
+		$this->sdl->info('Number of messages:'.$msgs_number);
+		$this->sdl->finish_job('Messages answer');
 	}
 
-	function CheckSensors($ACTUAL_TICK,$titles,$messages,$logfile=TICK_LOG_FILE_NPC)
+	function CheckSensors($ACTUAL_TICK,$titles,$messages)
 	{
-		$this->sdl->start_job('Sensors monitor', $logfile);
+		$this->sdl->start_job('Sensors monitor');
 		$msgs_number=0;
 		$sql='SELECT user_id FROM `scheduler_shipmovement` WHERE user_id>9 AND 
 			move_status=0 AND move_exec_started!=1 AND move_finish>'.$ACTUAL_TICK.' AND  dest="'.$this->bot['planet_id'].'"';
 		$attackers=$this->db->query($sql);
 		while($attacker = $this->db->fetchrow($attackers))
 		{
-			$this->sdl->log('The User '.$attacker['user_id'].' is trying to attack bot planet', $logfile);
+			$this->sdl->info('The User '.$attacker['user_id'].' is trying to attack bot planet');
 			$msgs_number++;
 			$sql='SELECT planet_owner,planet_name FROM `planets`
 			      WHERE planet_owner ='.$attacker['user_id'].' LIMIT 0 , 1';
@@ -163,7 +156,7 @@ class NPC
 			// Recover language of the sender
 			$sql = 'SELECT language FROM user WHERE user_id='.$attacker['user_id'];
 			if(!($language = $this->db->queryrow($sql)))
-				$this->sdl->log('<b>Error:</b> Cannot read user language!',	$logfile);
+				$this->sdl->error('Cannot read user language!');
 
 			switch($language['language'])
 			{
@@ -184,8 +177,8 @@ class NPC
 			$this->MessageUser($this->bot['user_id'],$attacker['user_id'],$title,
 				str_replace("<TARGETPLANET>",$target_planet['planet_name'],$text));
 		}
-		$this->sdl->log('Number of messages:'.$msgs_number, $logfile);
-		$this->sdl->finish_job('Sensors monitor', $logfile);
+		$this->sdl->info('Number of messages:'.$msgs_number);
+		$this->sdl->finish_job('Sensors monitor');
 	}
 
 	function CreateFleet($name,$template,$num,$planet_id = 0)
@@ -239,27 +232,27 @@ class NPC
 		$query='SELECT fleet_id, n_ships FROM `ship_fleets` WHERE fleet_name="'.$name.'" and user_id='.$this->bot['user_id'].' LIMIT 0, 1';
 		$fleet=$this->db->queryrow($query);
 		if (empty($fleet)) {
-			$this->sdl->log('<u>Warning:</u> Fleet: '.$name.' does not exists! - SKIP', TICK_LOG_FILE_NPC);
+			$this->sdl->warn('Fleet: '.$name.' does not exists! - SKIP');
 			return;
 		}
 
 		if($fleet['n_ships'] < $num)
 		{
-			$this->sdl->log('Fleet "'.$name.'" has only '.$fleet['n_ships'].' ships - we need restore', TICK_LOG_FILE_NPC);
+			$this->sdl->info('Fleet "'.$name.'" has only '.$fleet['n_ships'].' ships - we need restore');
 			$needed = $num - $fleet['n_ships'];
 
 			$sql = 'UPDATE ship_fleets SET n_ships = n_ships + '.$needed.' WHERE fleet_id = '.$fleet['fleet_id'];
 			if(!$this->db->query($sql))
-				$this->sdl->log('<b>Error:</b> Could not update new fleets data', TICK_LOG_FILE_NPC);
+				$this->sdl->error('Could not update new fleets data');
 
 			$sql = 'SELECT min_unit_1, min_unit_2, min_unit_3, min_unit_4, rof, max_torp,
 			               value_5, value_9
 			        FROM ship_templates WHERE id = '.$template;
 			if(($stpl = $this->db->queryrow($sql)) === false)
-				$this->sdl->log('<b>Error:</b> Could not query ship template data - '.$sql, TICK_LOG_FILE_NPC);
+				$this->sdl->error('Could not query ship template data - '.$sql);
 
 			if (empty($stpl))
-				$this->sdl->log('<b>Error:</b> Could not found template '.$template.'!', TICK_LOG_FILE_NPC);
+				$this->sdl->error('Could not found template '.$template.'!');
 			else {
 				$units_str = $stpl['min_unit_1'].', '.$stpl['min_unit_2'].', '.$stpl['min_unit_3'].', '.$stpl['min_unit_4'];
 				$sql = 'INSERT INTO ships (fleet_id, user_id, template_id, experience,
@@ -270,10 +263,11 @@ class NPC
 				for($i = 0; $i < $needed; ++$i)
 				{
 					if(!$this->db->query($sql)) {
-						$this->sdl->log('<b>Error:</b> Could not insert new ships #'.$i.' data', TICK_LOG_FILE_NPC);
+						$this->sdl->error('Could not insert new ships #'.$i.' data');
 					}
 				}
-				$this->sdl->log('Fleet: '.$fleet['fleet_id'].' - updated to '.$needed.' ships', TICK_LOG_FILE_NPC);
+				
+				$this->sdl->info('Fleet: '.$fleet['fleet_id'].' - updated to '.$needed.' ships');
 			}
 		}
 	}
@@ -291,17 +285,16 @@ class NPC
 		}
 	}
 
-	function ReadLogbook($logfile=TICK_LOG_FILE_NPC)
+	function ReadLogbook()
 	{
-		$this->sdl->start_job('Read Logbook', $logfile);
+		$this->sdl->start_job('Read Logbook');
 		$sql = 'UPDATE logbook SET log_read=1 WHERE user_id='.$this->bot['user_id'];
 		if(!$this->db->query($sql))
-			$this->sdl->log('<b>Error:</b> Logbook message could not be set to read',
-				$logfile);
-		$this->sdl->finish_job('Read Logbook', $logfile);
+			$this->sdl->error('Logbook message could not be set to read');
+		$this->sdl->finish_job('Read Logbook');
 	}
 
-	function StartBuild($ACTUAL_TICK,$building,$planet,$logfile=TICK_LOG_FILE_NPC)
+	function StartBuild($ACTUAL_TICK,$building,$planet)
 	{
 		global $MAX_BUILDING_LVL;
 		$res = BUILD_ERR_DB;
@@ -362,7 +355,7 @@ class NPC
 				        WHERE planet_id= '.$planet['planet_id'];
 
 				if (!$this->db->query($sql))
-					$this->sdl->log('<b>Error:</b> Cannot remove resources need for construction from planet #'.$planet['planet_id'].'!', $logfile);
+					$this->sdl->error('Cannot remove resources need for construction from planet #'.$planet['planet_id'].'!');
 
 				// Check planet activity
 				$sql = 'SELECT build_finish FROM scheduler_instbuild
@@ -388,23 +381,19 @@ class NPC
 					            "'.$build_finish.'")';
 
 				if (!$this->db->query($sql))
-					$this->sdl->log('<b>Error:</b> cannot add building <b>#'.$building.'</b> to the planet <b>#'.$planet['planet_id'].'</b>',
-						$logfile);
+					$this->sdl->error('cannot add building <b>#'.$building.'</b> to the planet <b>#'.$planet['planet_id'].'</b>');
 				else {
-					$this->sdl->log('Construction of <b>#'.$building.'</b> started on planet <b>#'.$planet['planet_id'].'</b>',
-						$logfile);
+					$this->sdl->debug('Construction of <b>#'.$building.'</b> started on planet <b>#'.$planet['planet_id'].'</b>');
 					$res = BUILD_SUCCESS;
 				}
 			}
 			else {
-				$this->sdl->log('Insufficient energy on planet <b>#'.$planet['planet_id'].'</b> for building <b>#'.$building.'</b>',
-					$logfile);
+				$this->sdl->warn('Insufficient energy on planet <b>#'.$planet['planet_id'].'</b> for building <b>#'.$building.'</b>');
 				$res = BUILD_ERR_ENERGY;
 			}
 		}
 		else {
-			$this->sdl->log('Insufficient resources on planet <b>#'.$planet['planet_id'].'</b> for building <b>#'.$building.'</b>',
-				$logfile);
+			$this->sdl->warn('Insufficient resources on planet <b>#'.$planet['planet_id'].'</b> for building <b>#'.$building.'</b>');
 			$res = BUILD_ERR_RESOURCES;
 		}
 		return $res;

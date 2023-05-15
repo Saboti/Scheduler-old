@@ -1,6 +1,19 @@
 <?php
 error_reporting(E_ALL);
 
+include_once('config.script.php');
+include_once($game_path . 'include/sql.php');
+
+// Define log Level
+define("LOG_LEVEL_FATAL",0);
+define("LOG_LEVEL_ERROR",1);
+define("LOG_LEVEL_WARN",2);
+define("LOG_LEVEL_INFO",3);
+define("LOG_LEVEL_DEBUG",4);
+define("LOG_LEVEL_JOB",5);
+
+
+// Error handler
 register_shutdown_function( "fatal_handler" );
 //set_error_handler('exceptions_error_handler');
 
@@ -9,6 +22,7 @@ function exceptions_error_handler($severity, $message, $filename, $lineno) {
 }
 
 function fatal_handler() {
+	global $sdl;
     $errfile = "unknown file";
     $errstr  = "shutdown";
     $errno   = E_CORE_ERROR;
@@ -22,43 +36,13 @@ function fatal_handler() {
         $errline = $error["line"];
         $errstr  = $error["message"];
 
-		echo format_error( $errno, $errstr, $errfile, $errline);
-
-        mail("florian@fam-hinrichsen.de" , "Fatal Tick Error" ,format_error( $errno, $errstr, $errfile, $errline));
+		$trace = print_r( debug_backtrace( false ), true );
+		$sdl->fatal("$errfile : $errline -- $errstr");
+		$sdl->fatal("$trace");
+        //mail("florian@fam-hinrichsen.de" , "Fatal Tick Error" ,format_error( $errno, $errstr, $errfile, $errline));
     }
 }
 
-function format_error( $errno, $errstr, $errfile, $errline ) {
-    $trace = print_r( debug_backtrace( false ), true );
-
-    $content = "
-    <table>
-        <thead><th>Item</th><th>Description</th></thead>
-        <tbody>
-            <tr>
-                <th>Error</th>
-                <td><pre>$errstr</pre></td>
-            </tr>
-            <tr>
-                <th>Errno</th>
-                <td><pre>$errno</pre></td>
-            </tr>
-            <tr>
-                <th>File</th>
-                <td>$errfile</td>
-            </tr>
-            <tr>
-                <th>Line</th>
-                <td>$errline</td>
-            </tr>
-            <tr>
-                <th>Trace</th>
-                <td><pre>$trace</pre></td>
-            </tr>
-        </tbody>
-    </table>";
-    return $content;
-}
 /*	
 	This file is part of STFC.
 	Copyright 2006-2007 by Michael Krauss (info@stfc2.de) and Tobias Gafner
@@ -306,40 +290,73 @@ class sql {
 
 class scheduler {
 	var $start_values = array();
-
-	function log($message,$file = '') {
-		if($file=='')
-		{
-			$file = TICK_LOG_FILE;
-		}
-						
-		$fp = fopen($file, 'a');
+	var $db;
+	var $module;
+	var $job;
+	
+	function __construct($module = ''){
+		global $config;
 		
-		if ( !$fp ) 
+		if($module == '')
 		{
-			echo 'last error: ';
-			var_dump(error_get_last());
+			$module = "TICK-MAIN";
 		}
-		else 
+		
+		$this->db = new sql($config['server'].":".$config['port'], $config['game_database'], $config['user'], $config['password']);
+		$this->module = $module;
+	}
+	
+	function fatal($message, $module = '') {
+		$this->log($message, LOG_LEVEL_FATAL);
+	}	
+	
+	function error($message, $module = '') {
+		$this->log($message, LOG_LEVEL_ERROR);
+	}	
+	
+	function warn($message, $module = '') {
+		$this->log($message, LOG_LEVEL_WARN);
+	}	
+	
+	function info($message, $module = '') {
+		$this->log($message, LOG_LEVEL_INFO);
+	}	
+	
+	function debug($message, $module = '') {
+		$this->log($message, LOG_LEVEL_DEBUG);
+	}
+	
+	
+	function log($message, $level = -1, $module = '') {
+		if($level == -1)
 		{
-			fwrite($fp, $message."<br>\n");
-			fclose($fp);
+			$level = LOG_LEVEL_INFO;
 		}
+				
+		if($module == '')
+		{
+			$module = $this->module;
+		}
+		
+		$sql = "INSERT INTO log(message,level,module,job) VALUES ('$message', $level, '$module', '$this->job');";		
+		$this->db->query($sql);
+		
+		echo "$level -> $module -> $message";
+		echo "<br>";
 	}
 
-	function start_job($name,$file = '') {
+	function start_job($name, $module = '') {
 		global $db;
-
-		$this->log('<font color=#0000ff>Starting <b>'.$name.'</b>...</font>',$file);
-
+		$this->job = $name;
+		$this->log('Starting '.$name.' ...', LOG_LEVEL_JOB, $module);
 		$this->start_values[$name] = array( microtime(true) , $db->i_query );
 	}
 
-	function finish_job($name,$file = '') {
+	function finish_job($name, $module = '') {
 		global $db;
+		$this->log('Executed '.$name.' (queries: '.($db->i_query - $this->start_values[$name][1]).') in '.round( (microtime(true)) - $this->start_values[$name][0] , 4).' secs', LOG_LEVEL_JOB, $module);
 
-		$this->log('<font color=#0000ff>Executed <b>'.$name.'</b> (</font><font color=#ff0000>queries: '.($db->i_query - $this->start_values[$name][1]).'</font><font color=#0000ff>) in </font><font color=#009900>'.round( (microtime(true)) - $this->start_values[$name][0] , 4).' secs</font><br>',$file);
-
+		$this->job = '';
 	}
 }
 

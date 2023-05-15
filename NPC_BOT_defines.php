@@ -32,11 +32,10 @@ define('BUILD_ERR_REQUIRED', -3);
 define('BUILD_ERR_ENERGY', -4);
 define('BUILD_ERR_DB', -5);
 define('BUILD_ERR_MAXLEVEL',-6);
-define('INSTALL_LOG_FILE_NPC', $game_path.'logs/NPC_installation.log');
 
 
 // Constant for Ramona Ferengi BOT
-define('PICK_RESOURCES_FROM_PLANET',1); // 1 = remove resources from BOT's planet
+define('PICK_RESOURCES_FROM_PLANET',0); // 1 = remove resources from BOT's planet
                                         // 0 = left BOT's planet untouched
 
 define('MALL_RESOURCES_AVAILABLE',1);   // 1 = resourses available at the Feregi's Mall

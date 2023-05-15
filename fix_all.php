@@ -26,9 +26,8 @@
 // Startup Config
 
 // include game definitions, path url and so on
-include('config.script.php');
+include_once('config.script.php');
 
-error_reporting(E_ERROR);
 ini_set('memory_limit', '200M');
 set_time_limit(120); // 2 minutes
 
@@ -36,11 +35,10 @@ if(!empty($_SERVER['SERVER_SOFTWARE'])) {
     echo 'The scheduler can only be called by CLI!'; exit;
 }
 
-define('TICK_LOG_FILE', $game_path . 'logs/fixall/tick_'.date('d-m-Y', time()).'.log');
 define('IN_SCHEDULER', true); // we are in the scheduler...
 
 // include commons classes and functions
-include('commons.php');
+include_once('commons.php');
 
 
 // ########################################################################################
@@ -49,22 +47,21 @@ include('commons.php');
 
 $starttime = ( microtime(true) );
 
-include($game_path . 'include/global.php');
-include($game_path . 'include/functions.php');
-include($game_path . 'include/text_races.php');
-include($game_path . 'include/race_data.php');
-include($game_path . 'include/ship_data.php');
-include($game_path . 'include/libs/moves.php');
-include($game_path . 'include/sql.php');
+include_once($game_path . 'include/global.php');
+include_once($game_path . 'include/functions.php');
+include_once($game_path . 'include/text_races.php');
+include_once($game_path . 'include/race_data.php');
+include_once($game_path . 'include/ship_data.php');
+include_once($game_path . 'include/libs/moves.php');
+include_once($game_path . 'include/sql.php');
 
-$sdl = new scheduler();
+$sdl = new scheduler("TICK-FIXALL");
 $db = new sql($config['server'].":".$config['port'], $config['game_database'], $config['user'], $config['password']); // create sql-object for db-connection
 
-$sdl->log('<br><br><br><b>-------------------------------------------------------------</b><br>'.
-          '<b>Starting FixAll-Script at '.date('d.m.y H:i:s', time()).'</b>');
+$sdl->info('Starting FixAll-Script at '.date('d.m.y H:i:s', time()));
 
 if(($cfg_data = $db->queryrow('SELECT * FROM config')) === false) {
-    $sdl->log('- Fatal: Could not query tick data! ABORTED');
+    $sdl->fatal('Could not query tick data! ABORTED');
     exit;
 }
 
@@ -74,12 +71,12 @@ $LAST_TICK_TIME = ($cfg_data['tick_time']-5*60);
 $STARDATE = $cfg_data['stardate'];
 
 if($cfg_data['tick_stopped']) {
-    $sdl->log('Finished FixAll-Script in '.round((microtime(true))-$starttime, 4).' secs<br>Tick has been stopped (Unlock in table "config")');
+    $sdl->info('Finished FixAll-Script in '.round((microtime(true))-$starttime, 4).' secs<br>Tick has been stopped (Unlock in table "config")');
     exit;
 }
 
 if(empty($ACTUAL_TICK)) {
-    $sdl->log('Finished FixAll-Script in '.round((microtime(true))-$starttime, 4).' secs<br>- Fatal: empty($ACTUAL_TICK) == true');
+    $sdl->fatal('Finished FixAll-Script in '.round((microtime(true))-$starttime, 4).' secs<br>- Fatal: empty($ACTUAL_TICK) == true');
     exit;
 }
 
@@ -91,8 +88,8 @@ Example Job:
 $sdl->start_job('Mine Job');
 
 do something ... during error / message:
-  $sdl->log('...');
-best also - before, so it's apart from the other messages, also: $sdl->log('- this was not true');
+  $sdl->info('...');
+best also - before, so it's apart from the other messages, also: $sdl->info('- this was not true');
 
 $sdl->finish_job('Mine Job'); // terminates the timer
 
@@ -117,7 +114,7 @@ $count = 0;
 
 if(!$q_user = $db->query($sql)) {
 
-    $sdl->log('<b>Error:</b> could not query user data');
+    $sdl->error('could not query user data');
 }
 
 while($user = $db->fetchrow($q_user)) {
@@ -125,7 +122,7 @@ while($user = $db->fetchrow($q_user)) {
 
     $sql = 'SELECT planet_id, planet_owner_enum FROM planets WHERE planet_owner='.$user['user_id'].' ORDER BY  planet_owned_date ASC, planet_id ASC';
     if(!$q_planet = $db->query($sql)) {
-        $sdl->log('<b>Error:</b> could not query user data');
+        $sdl->error('could not query user data');
     }
 
     $i=0;
@@ -138,7 +135,7 @@ while($user = $db->fetchrow($q_user)) {
     }
 
     if(!$db->query('SET @i=0')) {
-        $sdl->log('<b>Error:</b> could not set sql iterator variable for planet owner enum! SKIP');
+        $sdl->error('could not set sql iterator variable for planet owner enum! SKIP');
     }
 
     $sql = 'UPDATE planets
@@ -147,16 +144,12 @@ while($user = $db->fetchrow($q_user)) {
             ORDER BY planet_owned_date ASC, planet_id ASC';
 
     if(!$db->query($sql)) {
-        $sdl->log('<b>Error:</b>: could not update planet owner enum data! SKIP');
+        $sdl->error('could not update planet owner enum data! SKIP');
     }
 }
-$sdl->log($count.' of '.$count2.' planets now have adjusted values');
+$sdl->info($count.' of '.$count2.' planets now have adjusted values');
 
 $sdl->finish_job('Recalculate security forces');
-
-
-
-
 
 
 $sdl->start_job('Unimatrix Zero Maintenance');
@@ -174,7 +167,7 @@ $borg_fleet = $db->queryrow($sql);
 $sql = 'SELECT COUNT(*) AS counter FROM ships WHERE user_id = '.BORG_USERID.' AND template_id = '.$borg_tp['tact_cube']; // Tactical Cubes are only in Unimatrix Zero Fleet
 $borg_tact_num = $db->queryrow($sql);
 $tactical_counter = round((($borg_planets['counter'] - 1) / 5), 0) + 1;
-$sdl->log('Unimatrix Zero Tact Cube count is: '.$tactical_counter);
+$sdl->info('Unimatrix Zero Tact Cube count is: '.$tactical_counter);
 if($tactical_counter > $borg_tact_num['counter'])
 {
     // We add ONE Tactical Cube
@@ -183,7 +176,7 @@ if($tactical_counter > $borg_tact_num['counter'])
     $sql = 'INSERT INTO ships (fleet_id, user_id, template_id, experience, hitpoints, construction_time, torp, rof, rof2, last_refit_time)
             VALUES ('.$borg_fleet['fleet_id'].', '.BORG_USERID.', '.$borg_tp['tact_cube'].', '.$borg_tact_tp['value_9'].', '.$borg_tact_tp['value_5'].', '.time().', '.$borg_tact_tp['max_torp'].', '.$borg_tact_tp['rof'].', '.$borg_tact_tp['rof2'].', '.time().')';
     if(!$db->query($sql)) {
-        $sdl->log('<b>Error:</b>: could not insert new tactical cube in ships! CONTINUE');
+        $sdl->error('could not insert new tactical cube in ships! CONTINUE');
     }
 }
 
@@ -194,7 +187,7 @@ $sql = 'SELECT COUNT(*) AS counter FROM ships
         AND ship_torso = 9 AND ship_class = 3'; 
 $borg_std_num = $db->queryrow($sql);
 $standard_counter = $tactical_counter*4;
-$sdl->log('Unimatrix Zero Standard Cube count is: '.$standard_counter);
+$sdl->info('Unimatrix Zero Standard Cube count is: '.$standard_counter);
 if($standard_counter > $borg_std_num['counter'])
 {
     // We add FOUR Cubes for every one TACT
@@ -207,7 +200,7 @@ if($standard_counter > $borg_std_num['counter'])
         $sql = 'INSERT INTO ships (fleet_id, user_id, template_id, experience, hitpoints, construction_time, torp, rof, rof2, last_refit_time)
                 VALUES ('.$borg_fleet['fleet_id'].', '.BORG_USERID.', '.$borg_tp['standard_cube'].', '.$borg_std_tp['value_9'].', '.$borg_std_tp['value_5'].', '.time().', '.$borg_std_tp['max_torp'].', '.$borg_std_tp['rof'].', '.$borg_std_tp['rof2'].', '.time().')';
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b>: could not insert new cube in ships! CONTINUE');
+            $sdl->error('could not insert new cube in ships! CONTINUE');
         }
     }
 }
@@ -220,7 +213,7 @@ $sql = 'SELECT COUNT(*) AS counter FROM ships
               ship_torso = 6 AND ship_class = 2'; 
 $borg_std_num = $db->queryrow($sql);
 $sphere_counter = $standard_counter*3;
-$sdl->log('Unimatrix Zero Sphere count is: '.$sphere_counter);
+$sdl->info('Unimatrix Zero Sphere count is: '.$sphere_counter);
 if($sphere_counter > $borg_std_num['counter'])
 {
     // We add THREE spheres for every one CUBE
@@ -233,7 +226,7 @@ if($sphere_counter > $borg_std_num['counter'])
         $sql = 'INSERT INTO ships (fleet_id, user_id, template_id, experience, hitpoints, construction_time, torp, rof, rof2, last_refit_time)
                 VALUES ('.$borg_fleet['fleet_id'].', '.BORG_USERID.', '.$borg_tp['sphere'].', '.$borg_std_tp['value_9'].', '.$borg_std_tp['value_5'].', '.time().', '.$borg_std_tp['max_torp'].', '.$borg_std_tp['rof'].', '.$borg_std_tp['rof2'].', '.time().')';
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b>: could not insert new sphere in ships! CONTINUE');
+            $sdl->error('could not insert new sphere in ships! CONTINUE');
         }
     }
 }
@@ -264,7 +257,7 @@ foreach($user_set as $s_user){
 
     $sql = 'UPDATE user SET user_charted = '.$charted['num'].', user_first_contact = '.$first_contact['num'].', user_settler_made = '.$settler_made['num'].', user_settler_best = '.$settler_best['num'].' WHERE user_id = '.$s_user['user_id'];
     if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b>: could not update user #'.$s_user['user_id'].' slow stats data! CONTINUE.');
+            $sdl->error('could not update user #'.$s_user['user_id'].' slow stats data! CONTINUE.');
     }
 }
 
@@ -330,7 +323,7 @@ $sql = 'SELECT planet_id,planet_owner FROM planets
         WHERE ( planet_surrender < '.$ACTUAL_TICK.' AND planet_surrender > 0 )';
 
 if(($query_s_p = $db->query($sql)) === false) {
-    $sdl->log('<b>Error:</b> Could not query surrending planets');
+    $sdl->error('Could not query surrending planets');
 }
   
 while($surrender = $db->fetchrow($query_s_p)) {
@@ -382,7 +375,7 @@ while($surrender = $db->fetchrow($query_s_p)) {
              WHERE planet_id = '.$surrender['planet_id'];
 
     if(!$db->query($sql)) {
-        $sdl->log('<b>Error:</b> Could not delete switch user');
+        $sdl->error('Could not delete switch user');
     }
 
     // DC ---- History record in planet_details, with label '30'
@@ -398,20 +391,20 @@ while($surrender = $db->fetchrow($query_s_p)) {
                     '.$_temp['user_alliance'].', '.time().', 30)';
 
     if(!$db->query($sql)) {
-        $sdl->log('<b>Error:</b> Could not insert new planet details 30 for <b>'.$surrender['planet_id'].'</b>! CONTINUED');
+        $sdl->error('Could not insert new planet details 30 for <b>'.$surrender['planet_id'].'</b>! CONTINUED');
     }
 
     $sql = 'DELETE FROM settlers_relations WHERE planet_id = '.$surrender['planet_id'];
 
     if(!$db->query($sql)) {
-        $sdl->log('<b>Error:</b> Could not remove settlers_relations entry for <b>'.$surrender['planet_id'].'</b>! CONTINUED');
+        $sdl->error('Could not remove settlers_relations entry for <b>'.$surrender['planet_id'].'</b>! CONTINUED');
     }
     
     $sql = 'INSERT INTO settlers_relations (planet_id, race_id, user_id, timestamp, log_code, mood_modifier)
                                     VALUES ('.$surrender['planet_id'].', 13, '.INDEPENDENT_USERID.', '.time().', 30, 80)';
     
     if(!$db->query($sql)) {
-        $sdl->log('<b>Error:</b> Could not create Settlers Founder data for <b>'.$surrender['planet_id'].'</b>! CONTINUED');
+        $sdl->error('Could not create Settlers Founder data for <b>'.$surrender['planet_id'].'</b>! CONTINUED');
     } 
 }
 
@@ -423,12 +416,12 @@ $sdl->start_job('Logbook cleaning');
 $sql = 'DELETE FROM logbook WHERE log_read=1 AND log_date<'.(time()-3600*24*14);
 
 if(!$db->query($sql)) {
-    $sdl->log('<b>Error:</b> could not delete 14-day old logs');
+    $sdl->error('could not delete 14-day old logs');
 }
 $sql = 'DELETE FROM logbook WHERE log_type='.LOGBOOK_GOVERNMENT.' AND log_date<'.(time()-3600*24);
 
 if(!$db->query($sql)) {
-    $sdl->log('<b>Error:</b> could not delete 1-day old government logs');
+    $sdl->error('could not delete 1-day old government logs');
 }
 
 
@@ -437,7 +430,7 @@ $sql = 'SELECT u.user_id, COUNT(l.log_id) AS n_logs  FROM (user u)
         LEFT JOIN (logbook l) ON l.user_id=u.user_id AND l.log_read=0
         GROUP BY u.user_id';
 if(!$q_user = $db->query($sql)) {
-    $sdl->log('<b>Notice:</b> Could not query user! CONTINUED');
+    $sdl->warn('Could not query user! CONTINUED');
 }
 else {
     while($user = $db->fetchrow($q_user)) {
@@ -446,7 +439,7 @@ else {
                 SET unread_log_entries = '.$user['n_logs'].' WHERE user_id = '.$user['user_id'];
                 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> could not update user unread log entries data');
+            $sdl->error('could not update user unread log entries data');
         }
     }
 }
@@ -465,7 +458,7 @@ $min_members = 5;
 $sql = 'SELECT a.alliance_id, ap.ad_id FROM (alliance a) INNER JOIN (alliance_diplomacy ap) ON (ap.alliance1_id = a.alliance_id) OR (ap.alliance2_id = a.alliance_id) WHERE a.alliance_points <= '.$min_points.' AND a.alliance_member <= '.$min_members.' AND ap.type = 1 AND (ap.status = 0 OR ap.status = 2)'; 
 
 if(!$q_diplomacy = $db->query($sql)) {
-    $sdl->log('<b>Notice:</b> Could not query diplomacy! CONTINUED');
+    $sdl->warn('Could not query diplomacy! CONTINUED');
 }
 else {
     while($ap = $db->fetchrow($q_diplomacy)) {
@@ -473,7 +466,7 @@ else {
         $sql = 'DELETE FROM alliance_diplomacy WHERE ad_id = '.$ap['ad_id'];
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> could not delete illegal pacts');
+            $sdl->error('could not delete illegal pacts');
         }
     }
 }
@@ -485,6 +478,6 @@ $sdl->finish_job('Clearing invalid war declarations');
 // Quit and close log
 
 $db->close();
-$sdl->log('<b>Finished FixAll-Script in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
+$sdl->info('<b>Finished FixAll-Script in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
 
 ?>

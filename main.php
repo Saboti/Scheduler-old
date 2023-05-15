@@ -26,21 +26,21 @@
 // Startup Config
 
 // include game definitions, path url and so on
-include('config.script.php');
-include($game_path . 'include/sql.php');
+include_once('config.script.php');
+include_once($game_path . 'include/sql.php');
 
 ini_set('memory_limit', '200M');
 set_time_limit(240); // 4 minutes
 
 if(!empty($_SERVER['SERVER_SOFTWARE'])) {
-    //echo 'The scheduler can only be called by CLI!'; exit;
+    echo 'The scheduler can only be called by CLI!'; exit;
 }
 
 define('TICK_LOG_FILE', $game_path . 'logs/tick_'.date('d-m-Y', time()).'.log');
 define('IN_SCHEDULER', true); // we are in the scheduler...
 
 // include commons classes and functions
-include('commons.php');
+include_once('commons.php');
 
 
 // ########################################################################################
@@ -49,24 +49,23 @@ include('commons.php');
 
 $starttime = ( microtime(true) );
 
-include($game_path . 'include/global.php');
-include($game_path . 'include/functions.php');
-include($game_path . 'include/text_races.php');
-include($game_path . 'include/race_data.php');
-include($game_path . 'include/ship_data.php');
-include($game_path . 'include/libs/moves.php');
-include($game_path . 'include/libs/world.php'); // Needed by NPC BOT
+include_once($game_path . 'include/global.php');
+include_once($game_path . 'include/functions.php');
+include_once($game_path . 'include/text_races.php');
+include_once($game_path . 'include/race_data.php');
+include_once($game_path . 'include/ship_data.php');
+include_once($game_path . 'include/libs/moves.php');
+include_once($game_path . 'include/libs/world.php'); // Needed by NPC BOT
 
-$sdl = new scheduler();
+$sdl = new scheduler("TICK");
 $db = new sql($config['server'].":".$config['port'], $config['game_database'], $config['user'], $config['password']); // create sql-object for db-connection
 
 $game = new game();
 
-$sdl->log('<br><br><br><b>-------------------------------------------------------------</b><br>'.
-          '<b>Starting Scheduler at '.date('d.m.y H:i:s', time()).'</b>');
+$sdl->info('Starting Scheduler at '.date('d.m.y H:i:s', time()));
 
 if(($cfg_data = $db->queryrow('SELECT * FROM config')) === false) {
-    $sdl->log('- Fatal: Could not query tick data! ABORTED');
+    $sdl->fatal('Could not query tick data! ABORTED');
   exit;
 }
 
@@ -78,17 +77,17 @@ $FUTURE_SHIP = $cfg_data['future_ship'];
 
 
 if($cfg_data['tick_stopped']) {
-    $sdl->log('Finished Scheduler in '.round((microtime(true))-$starttime, 4).' secs<br>Tick has been stopped (Unlock in table "config")');
+    $sdl->info('Finished Scheduler in '.round((microtime(true))-$starttime, 4).' secs. Tick has been stopped (Unlock in table "config")');
     exit;
 }
 
 if(empty($ACTUAL_TICK)) {
-    $sdl->log('Finished Scheduler in '.round((microtime(true))-$starttime, 4).' secs<br>- Fatal: empty($ACTUAL_TICK) == true');
+    $sdl->fatal('Finished Scheduler in '.round((microtime(true))-$starttime, 4).' secs. empty($ACTUAL_TICK) == true');
     exit;
 }
 
 if(!$db->query('UPDATE config SET tick_time = '.(time() + 60 * TICK_DURATION))) {
-    $sdl->log('- Notice: Could not update tick_time! CONTINUED');
+    $sdl->warn('Could not update tick_time! CONTINUED');
 }
 
 
@@ -98,8 +97,8 @@ Example Job:
 $sdl->start_job('Mine Job');
 
 do something ... during error / message:
-  $sdl->log('...');
-best also - before, so it's apart from the other messages, also: $sdl->log('- this was not true');
+  $sdl->info('...');
+best also - before, so it's apart from the other messages, also: $sdl->info('- this was not true');
 
 $sdl->finish_job('Mine Job'); // terminates the timer
 
@@ -121,7 +120,7 @@ $db->query($sql);
 
 $res = $db->num_rows();
 
-if ($res > 0) $sdl->log('Extra-Optimal Range Upgrade Planet this time: '.$res);
+if ($res > 0) $sdl->info('Extra-Optimal Range Upgrade Planet this time: '.$res);
 
 $sdl->finish_job('Extra-Optimal Range Upgrade Planet Step');
 
@@ -137,11 +136,12 @@ $sql = 'SELECT planet_id,installation_type
         WHERE build_finish <= '.$ACTUAL_TICK;
 
 if(($q_inst = $db->query($sql)) === false) {
-    $sdl->log('<b>Error:</b> Could not query scheduler instbuild data! - SKIPPED');
+    $sdl->error('Could not query scheduler instbuild data! - SKIPPED');
 }
 else if($db->num_rows() > 0)
 {
-    while($build = $db->fetchrow($q_inst)) {
+    while($build = $db->fetchrow($q_inst)) 
+	{
         $recompute_static = (in_array($build['installation_type'], array(1, 2, 3, 11))) ? 1 : 0;
 
         $sql = 'UPDATE planets
@@ -149,8 +149,9 @@ else if($db->num_rows() > 0)
                     recompute_static = '.$recompute_static.'
                 WHERE planet_id = '.$build['planet_id'];
 
-        if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Query sched_instbuild @ planets failed! - CONTINUED');
+        if(!$db->query($sql)) 
+		{
+            $sdl->error('Query sched_instbuild @ planets failed! - CONTINUED');
         }
     }
 
@@ -158,7 +159,7 @@ else if($db->num_rows() > 0)
             WHERE build_finish <= '.$ACTUAL_TICK;
 
     if(!$db->query($sql)) {
-        $sdl->log('<b>Error:</b> Could not delete instbuild data - CONTINUED');
+        $sdl->error('Could not delete instbuild data - CONTINUED');
     }
 
     unset($build);
@@ -178,7 +179,7 @@ $db->lock();
 if(!$db->query('UPDATE planets SET
                 unittrain_error = 0
                 WHERE unittrain_error <> 0')) {
-    $sdl->log('<b>Error:</b> Cannot reset training errors - CONTINUED');
+    $sdl->error('Cannot reset training errors - CONTINUED');
 }
 
 $tmp = 'SELECT planet_id,
@@ -242,7 +243,7 @@ $tmp = 'SELECT planet_id,
         WHERE (unittrainid_nexttime<="'.$ACTUAL_TICK.'") AND (unittrainid_nexttime>0)';
 
 if(!($academyquery=$db->query($tmp))) {
-    $sdl->log('<b>Error:</b> Could not query unittrain data! - SKIPPED');
+    $sdl->error('Could not query unittrain data! - SKIPPED');
 }
 else
 {
@@ -251,7 +252,7 @@ else
         // Look whether the construction number is within normal parameters, but should never lie outside:
         if ($planet['unittrain_actual'] < 1 || $planet['unittrain_actual'] > 10) {
             if(!$db->query('UPDATE planets SET unittrain_actual="1" WHERE planet_id="'.$planet['planet_id'].'"'))
-                $sdl->log('<b>Error:</b> Cannot fix training queue pointer on planet #'.$planet['planet_id'].'- CONTINUED');
+                $sdl->error('Cannot fix training queue pointer on planet #'.$planet['planet_id'].'- CONTINUED');
         }
         // If within normal parameters
         else {
@@ -395,13 +396,13 @@ else
 
                 if($planet['max_units'] <= $damn_units) {
                     if(!$db->query('UPDATE planets SET unittrain_error="2" WHERE planet_id="'.$planet['planet_id'].'"'))
-                        $sdl->log('<b>Error:</b> Cannot set "unit space full" training error on planet #'.$planet['planet_id'].' CONTINUED');
+                        $sdl->error('Cannot set "unit space full" training error on planet #'.$planet['planet_id'].' CONTINUED');
                 }
                 else {
 
                     if (isset($sql) && count($sql)>0) {
                         if(!$db->query('UPDATE planets SET '.implode(",", $sql).' WHERE planet_id='.$planet['planet_id']))
-                            $sdl->log('<b>Error:</b> Cannot update training queue on planet #'.$planet['planet_id'].' CONTINUED');
+                            $sdl->error('Cannot update training queue on planet #'.$planet['planet_id'].' CONTINUED');
                     }
                 }
 
@@ -410,11 +411,9 @@ else
             // If we did not have enough resources
             else {
                 if(!$db->query('UPDATE planets SET unittrain_error="1" WHERE planet_id="'.$planet['planet_id'].'"'))
-                    $sdl->log('<b>Error:</b> Cannot set "not enough resources" training error on planet #'.$planet['planet_id'].' CONTINUED');
+                    $sdl->error('Cannot set "not enough resources" training error on planet #'.$planet['planet_id'].' CONTINUED');
             }
-
         } // End of "within normal parameters"
-
     } // End while
 } // End of: Successfull Planet Query
 
@@ -436,7 +435,7 @@ $sql = 'SELECT s.ship_id, s.ship_untouchable,
         WHERE s.ship_repair>0 AND s.ship_repair<= '.$ACTUAL_TICK;
 
 if(($q_ship = $db->query($sql)) === false) {
-    $sdl->log('<b>Error:</b> Could not query shiprepair data! - SKIPPED');
+    $sdl->error('Could not query shiprepair data! - SKIPPED');
 }
 else
 {
@@ -456,7 +455,7 @@ else
         // DC ----
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not update processed ships data: <b>'.$sql.'</b> - CONTINUED');
+            $sdl->error('Could not update processed ships data: <b>'.$sql.'</b> - CONTINUED');
         }
     }
 }
@@ -489,7 +488,7 @@ $sql = 'SELECT s.ship_id,
 
 
 if(($q_ship = $db->query($sql)) === false) {
-    $sdl->log('<b>Error:</b> Could not query shiprepair data! - SKIPPED');
+    $sdl->error('Could not query shiprepair data! - SKIPPED');
 }
 else
 {
@@ -509,13 +508,13 @@ else
 
         $sql = 'DELETE FROM ships WHERE ship_id='.$ship['ship_id'];
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not delete ship: <b>'.$sql.'</b> - CONTINUED');
+            $sdl->error('Could not delete ship: <b>'.$sql.'</b> - CONTINUED');
         }
         else
         {
             $planet_id = ((-1)*$ship['fleet_id']);
 
-            $sdl->log('The ship <b>#'.$ship['ship_id'].'(template '.$ship['id'].')</b> on planet <b>#'.$planet_id.'</b> was dismantled successfully!');
+            $sdl->info('The ship <b>#'.$ship['ship_id'].'(template '.$ship['id'].')</b> on planet <b>#'.$planet_id.'</b> was dismantled successfully!');
 
             $sql = 'UPDATE planets
                     SET resource_1=resource_1+'.$res[0].',
@@ -529,7 +528,7 @@ else
                         unit_6=unit_6+'.$unit[5].'
                     WHERE planet_id='.$planet_id;
             if(!$db->query($sql)) {
-                $sdl->log('<b>Error:</b> Could not update planets data: <b>'.$sql.'</b> - CONTINUED');
+                $sdl->error('Could not update planets data: '.$sql.' - CONTINUED');
             }
         }
     }
@@ -552,7 +551,7 @@ $sql = 'SELECT ssb.*,
         WHERE ssb.finish_build <= '.$ACTUAL_TICK;
 
 if(!$q_shipyard = $db->query($sql)) {
-    $sdl->log(' - <b>Warning:</b> Could not query shipbuild data! - SKIPPED');
+    $sdl->warn('Could not query shipbuild data! - SKIPPED');
 }
 else {
 
@@ -565,7 +564,7 @@ else {
           WHERE fleet_id = -'.$shipbuild['planet_id'];
 
         if(!$q_spacedock = $db->query($sql)) {
-            $sdl->log(' - <b>Warning:</b> Could not query spacedock number of ships! - CONTINUED AND JUMP NEXT');
+            $sdl->warn('Could not query spacedock number of ships! - CONTINUED AND JUMP NEXT');
             continue;
         }
 
@@ -585,14 +584,14 @@ else {
                   AND finish_build > '.$ACTUAL_TICK;
 
             if(!$db->query($sql)) {
-                $sdl->log(' - <b>Warning:</b> Could not update start and finish scheduler! - CONTINUED!');
+                $sdl->error('Could not update start and finish scheduler! - CONTINUED!');
                 continue;
             }
 
         } else {
 
             if(empty($shipbuild['template_id'])) {
-                $sdl->log(' - <b>Warning:</b> Could not find template '.$shipbuild['template_id'].'! - CONTINUED AND JUMP TO NEXT');
+                $sdl->warn('Could not find template '.$shipbuild['template_id'].'! - CONTINUED AND JUMP TO NEXT');
                 continue;
             }
 
@@ -602,7 +601,7 @@ else {
                     LIMIT 1';
 
             if(!$db->query($sql)) {
-                $sdl->log(' - <b>Warning:</b> Could not delete shipbuild data on planet '.$shipbuild['planet_id'].' ending in tick '.$shipbuild['finish_build'].'! - CONTINUED AND JUMP TO NEXT');
+                $sdl->error('Could not delete shipbuild data on planet '.$shipbuild['planet_id'].' ending in tick '.$shipbuild['finish_build'].'! - CONTINUED AND JUMP TO NEXT');
                 continue;
             }
 
@@ -610,10 +609,10 @@ else {
                     VALUES (-'.$shipbuild['planet_id'].', '.$shipbuild['user_id'].', '.$shipbuild['ship_type'].', '.$shipbuild['template_value_9'].', '.$shipbuild['template_value_5'].', '.$game->TIME.', '.$shipbuild['unit_1'].', '.$shipbuild['unit_2'].', '.$shipbuild['unit_3'].', '.$shipbuild['unit_4'].', '.$shipbuild['template_rof'].', '.$shipbuild['template_max_torp'].')';
 
             if(!$db->query($sql)) {
-                $sdl->log(' - <b>Warning:</b> Could not insert new ship data! - CONTINUED AND JUMP TO NEXT');
+                $sdl->error('Could not insert new ship data! - CONTINUED AND JUMP TO NEXT');
                 continue;
             }
-            $sdl->log('<b>Added Ship from Yard to Dock:</b> Planet #'.$shipbuild['planet_id'].' for User #'.$shipbuild['user_id'].' with Template #'.$shipbuild['ship_type'].' - <b>SUCCESS!</b>');
+            $sdl->info('<b>Added Ship from Yard to Dock:</b> Planet #'.$shipbuild['planet_id'].' for User #'.$shipbuild['user_id'].' with Template #'.$shipbuild['ship_type'].' - SUCCESS!');
         }
     }
 }
@@ -636,7 +635,7 @@ $sql = 'SELECT sr.*,
         WHERE sr.research_finish <= '.$ACTUAL_TICK;
 
 if(($q_research = $db->query($sql)) === false) {
-    $sdl->log('<b>Error:</b> Could not query research data - SKIPPED');
+    $sdl->error('Could not query research data - SKIPPED');
 }
 else if($db->num_rows() > 0) {
     $n_techs = 0;
@@ -649,7 +648,7 @@ else if($db->num_rows() > 0) {
                     WHERE planet_id = '.$research['planet_id'];
 
             if(!$db->query($sql)) {
-                $sdl->log('<b>Error:</b> Query sched_research @ user failed! - CONTINUED');
+                $sdl->error('Query sched_research @ user failed! - CONTINUED');
             }
         }
         else {
@@ -658,7 +657,7 @@ else if($db->num_rows() > 0) {
                     WHERE planet_id = '.$research['planet_id'];
 
             if(!$db->query($sql)) {
-                $sdl->log('<b>Error:</b> Query sched_research @ user failed:<br> '.$sql.' <br> - CONTINUED');
+                $sdl->error('Query sched_research @ user failed:<br> '.$sql.' <br> - CONTINUED');
             }
 
         }
@@ -671,7 +670,7 @@ else if($db->num_rows() > 0) {
             LIMIT '.$n_techs;
 
     if(!$db->query($sql)) {
-        $sdl->log('<b>Error:</b> Could not delete processed research data');
+        $sdl->error('Could not delete processed research data');
     }
 }
 $sdl->finish_job('Research Scheduler');
@@ -687,9 +686,10 @@ $sql = 'SELECT *
         WHERE s.arrival_time <= '.$ACTUAL_TICK;
 
 if(($q_rtrade = $db->query($sql)) === false) {
-    $sdl->log(' - <b>Warning:</b> Could not query scheduler resourcetrade data! - SKIPPED');
+    $sdl->error('Could not query scheduler resourcetrade data! - SKIPPED');
 }
-else if($db->num_rows() > 0) {
+else if($db->num_rows() > 0) 
+{
     $n_resourcetrades = 0;
     while($trade = $db->fetchrow($q_rtrade)) {
 
@@ -699,9 +699,12 @@ else if($db->num_rows() > 0) {
                 WHERE planet_id = '.$trade['planet'];
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Query sched_resourcetrade @ planets failed! - CONTINUED');
+            $sdl->error('Query sched_resourcetrade @ planets failed! - CONTINUED');
         }
-        else { $sdl->log('<b>Transport delivered</b> Transport ID: '.$trade['id'].' at Planet: '.$trade['planet'].' <b>WARES</b> - Metal: '.$trade['resource_1'].' Minerals: '.$trade['resource_2'].' Dilithium: '.$trade['resource_3'].' Workers: '.$trade['resource_4'].' lvl1: '.$trade['unit_1'].' lvl2: '.$trade['unit_2'].' lvl3: '.$trade['unit_3'].' lvl4: '.$trade['unit_4'].' lvl5: '.$trade['unit_5'].' lvl6: '.$trade['unit_6'].''); }
+        else 
+		{ 
+			$sdl->debug('<b>Transport delivered</b> Transport ID: '.$trade['id'].' at Planet: '.$trade['planet'].' <b>WARES</b> - Metal: '.$trade['resource_1'].' Minerals: '.$trade['resource_2'].' Dilithium: '.$trade['resource_3'].' Workers: '.$trade['resource_4'].' lvl1: '.$trade['unit_1'].' lvl2: '.$trade['unit_2'].' lvl3: '.$trade['unit_3'].' lvl4: '.$trade['unit_4'].' lvl5: '.$trade['unit_5'].' lvl6: '.$trade['unit_6'].''); 
+		}
 
         ++$n_resourcetrades;
     }
@@ -711,7 +714,7 @@ else if($db->num_rows() > 0) {
             LIMIT '.$n_resourcetrades;
 
     if(!$db->query($sql)) {
-        $sdl->log('<b>Error: (Critical)</b> Could not delete scheduler_resourcetrade data - CONTINUED');
+        $sdl->error('Could not delete scheduler_resourcetrade data - CONTINUED');
     }
     unset($trade);
 }
@@ -730,7 +733,7 @@ $sql = 'SELECT count(user_id) AS n_ships, user_id, target_planet_id
         GROUP BY user_id';
 
 if(($fh_stream = $db->query($sql)) === false) {
-    $sdl->log('<b>Error:</b> Could not query future human reward! - SKIPPED');
+    $sdl->error('Could not query future human reward! - SKIPPED');
 }
 else if($db->num_rows() > 0) {
     // Load Future human ship's template
@@ -749,7 +752,7 @@ else if($db->num_rows() > 0) {
                         '.$player_to_serve['n_ships'].')';
 
         if(!$db->query($sql)) {
-            $sdl->log(' - <b>Warning:</b> Could not create Reward Fleet for user '.$player_to_serve['user_id'].' - CONTINUED');
+            $sdl->warn('Could not create Reward Fleet for user '.$player_to_serve['user_id'].' - CONTINUED');
             continue;
         }
 
@@ -773,14 +776,14 @@ else if($db->num_rows() > 0) {
                             '.$game->TIME.')';
 
             if(!$db->query($sql)) {
-                $sdl->log(' - <b>Warning:</b> Could not Insert '.$player_to_serve['n_ships'].' Reward ship for user '.$player_to_serve['user_id'].' - CONTINUED');
+                $sdl->warn('Could not Insert '.$player_to_serve['n_ships'].' Reward ship for user '.$player_to_serve['user_id'].' - CONTINUED');
                 continue;
             }
         }
 
         $sql = 'UPDATE future_human_reward SET sent = 1 WHERE user_id = '.$player_to_serve['user_id'];
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not update future human reward - CONTINUED');
+            $sdl->error('Could not update future human reward - CONTINUED');
         }
     }
 }
@@ -792,23 +795,23 @@ $sdl->finish_job('Future Humans Rewards');
 //BOT
 ini_set('memory_limit', '500M');
 define('FILE_PATH_hg',$game_path);
-define('TICK_LOG_FILE_NPC_BORG', $game_path.'logs/NPC_BOT_BORG_tick_'.date('d-m-Y', time()).'.log');
-define('TICK_LOG_FILE_NPC_FERENGI', $game_path.'logs/NPC_BOT_FERENGI_tick_'.date('d-m-Y', time()).'.log');
-define('TICK_LOG_FILE_NPC_SETTLERS', $game_path.'logs/NPC_BOT_SETTLERS_tick_'.date('d-m-Y', time()).'.log');
-include('NPC_BOT.php');
-include('ferengi.php');
-include('borg.php');
-include('settlers.php');
+include_once('NPC_BOT.php');
+include_once('ferengi.php');
+include_once('borg.php');
+include_once('settlers.php');
+
 $sdl->start_job('Ramona comes over - oh women are so wonderful');
-$quark = new Ferengi($db,$sdl);
+$quark = new Ferengi($db);
 $quark->Execute(1,"Normal operation in the test round",0,"#DEEB24");
 $sdl->finish_job('Ramona comes over - oh women are so wonderful');
+
 $sdl->start_job('SevenOfNine is coming - oh borg are not so beautiful');
-$borg = new Borg($db,$sdl);
+$borg = new Borg($db);
 $borg->Execute(1);
 $sdl->finish_job('SevenOfNine is coming - oh borg are not so beautiful');
+
 $sdl->start_job('Mayflower is coming - settlers are the real workforce');
-$settlers = new Settlers($db,$sdl);
+$settlers = new Settlers($db);
 $settlers->Execute(1);
 $sdl->finish_job('Mayflower is coming - settlers are the real workforce');
 
@@ -825,10 +828,10 @@ else {
 }
 
 if(!$db->query('UPDATE config SET tick_id = tick_id + 1, shipwreck_id=shipwreck_id+1, tick_securehash = "'.md5($ACTUAL_TICK).'", stardate = "'.$new_stardate.'"')) {
-    $sdl->log('<b>Error:</b> Could not update tick ID, Tick stopped, sent mail to admin@stfc.it');
-    mail('admin@stfc.it','STFC2: Tickstop','Tick '.$ACTUAL_TICK.' has been stopped.\nError message:\n'.$db->raise_error().'\n\nGreetings, STGC Scheduler');
+    $sdl->error('Could not update tick ID, Tick stopped, sent mail to florian@fam-hinrichsen.de');
+    mail('florian@fam-hinrichsen.de','STFC2: Tickstop','Tick '.$ACTUAL_TICK.' has been stopped.\nError message:\n'.$db->raise_error().'\n\nGreetings, STGC Scheduler');
     $db->raise_error();
-    $sdl->log('Tick '.$ACTUAL_TICK.' has (presumably) halted.<br>Error message:<br>'.$db->error['message'].'<br><br>Error Source: " UPDATE config SET tick_id = tick_id + 1, tick_securehash = "'.md5($ACTUAL_TICK).'" "<br><br>Greetings, STGC Scheduler');
+    $sdl->fatal('Tick '.$ACTUAL_TICK.' has (presumably) halted.<br>Error message:<br>'.$db->error['message'].'<br><br>Error Source: " UPDATE config SET tick_id = tick_id + 1, tick_securehash = "'.md5($ACTUAL_TICK).'" "<br><br>Greetings, STGC Scheduler');
     $db->query('UPDATE config SET tick_stopped = 1');
     exit;
 }
@@ -843,16 +846,16 @@ if(!$db->query('UPDATE config SET tick_id = tick_id + 1, shipwreck_id=shipwreck_
 $sdl->start_job('Shipdestruction (Wrecking)');
 $sql = 'UPDATE ships s LEFT JOIN ship_templates t ON t.id=s.template_id SET s.hitpoints=s.hitpoints-t.value_5/100 WHERE s.hitpoints>t.value_5/2 AND s.fleet_id>0 AND s.next_refit <='.$ACTUAL_TICK;
 if(($db->query($sql)) === false)
-    $sdl->log('<b>Error:</b> Could not execute shipwrecking query! CONTINUED');
+    $sdl->error('Could not execute shipwrecking query! CONTINUED');
 
 if(!$db->query('UPDATE config SET shipwreck_id='.rand(0,100))) {
-    $sdl->log('- Could not update shipwreck_id! CONTINUED');
+    $sdl->info('- Could not update shipwreck_id! CONTINUED');
 
 }
 $sdl->finish_job('Shipdestruction (Wrecking)');
 }
 else
-$sdl->log('<font color=#0000ff>Shipdestruction (Wrecking) [Skipped '.$cfg_data['shipwreck_id'].'/'.(SHIP_RUST_CHECK).']</font><br>');
+$sdl->info('<font color=#0000ff>Shipdestruction (Wrecking) [Skipped '.$cfg_data['shipwreck_id'].'/'.(SHIP_RUST_CHECK).']</font><br>');
 */
 
 
@@ -872,7 +875,7 @@ $sql = 'SELECT planet_id, planet_name, planet_owner,
         FROM planets
         WHERE min_security_troops > (100+unit_1*2+unit_2*3+unit_3*4+unit_4*4) AND planet_owner>10';
 if(($q_planets = $db->query($sql)) === false) {
-    $sdl->log('<b>Error:</b> Could not query planets data to destroy buildings based on troop strength! - CONTINUED');
+    $sdl->error('Could not query planets data to destroy buildings based on troop strength! - CONTINUED');
 }
 
 $n_destruction=0;
@@ -901,7 +904,7 @@ while($planet = $db->fetchrow($q_planets)) {
         if ($chance>90) array_push($victim,0);
 
         $rand_building=rand(0,count($victim)-1);
-        $sdl->log('Building:'.count($victim).' of 12, randomly chosen:'.$rand_building.'<br>');
+        $sdl->info('Building:'.count($victim).' of 12, randomly chosen:'.$rand_building.'<br>');
         if ($planet['building_'.$rand_building]>1)
         {
             $log_data=array(
@@ -934,7 +937,7 @@ while($planet = $db->fetchrow($q_planets)) {
                     SET building_'.$rand_building.'=building_'.$rand_building.'-1 WHERE planet_id = '.$planet['planet_id'];
 
             if(!$db->query($sql)) {
-                $sdl->log('<b>Error:</b> Could not destroy building '.$rand_building.' of planet <b>'.$planet['planet_id'].'</b>! - CONTINUED');
+                $sdl->error('Could not destroy building '.$rand_building.' of planet <b>'.$planet['planet_id'].'</b>! - CONTINUED');
             }
 
         }
@@ -944,12 +947,8 @@ while($planet = $db->fetchrow($q_planets)) {
 
     ++$n_destruction;
 }
-$sdl->log('(Affected '.$n_destruction.' planets)');
+$sdl->info('(Affected '.$n_destruction.' planets)');
 $sdl->finish_job('Destruction based on troop strength');
-
-
-
-
 
 // ########################################################################################
 // ########################################################################################
@@ -957,14 +956,12 @@ $sdl->finish_job('Destruction based on troop strength');
 $sdl->start_job('Planet insurrection set');
 
 $sql = 'UPDATE planets SET planet_insurrection_time=0 WHERE min_security_troops <= (100+unit_1*2+unit_2*3+unit_3*4+unit_4*4)';
-if(($db->query($sql)) === false) $sdl->log('<b>Error:</b> Could not update (unset) planets insurrection data! - CONTINUED');
+if(($db->query($sql)) === false) $sdl->error(' Could not update (unset) planets insurrection data! - CONTINUED');
 
 $sql = 'UPDATE planets SET planet_insurrection_time=UNIX_TIMESTAMP() WHERE min_security_troops > (100+unit_1*2+unit_2*3+unit_3*4+unit_4*4) AND planet_insurrection_time=0';
-if(($db->query($sql)) === false) $sdl->log('<b>Error:</b> Could not update (set) planets insurrection data! - CONTINUED');
+if(($db->query($sql)) === false) $sdl->error('Could not update (set) planets insurrection data! - CONTINUED');
 
 $sdl->finish_job('Planet insurrection set');
-
-
 
 // ########################################################################################
 // ########################################################################################
@@ -983,7 +980,7 @@ $sql = 'SELECT planet_id, planet_name, planet_owner, planet_points
               (UNIX_TIMESTAMP()-planet_insurrection_time)>3600*48';
 
 if(($q_planets = $db->query($sql)) === false) {
-    $sdl->log('<b>Error:</b> Could not query planets data to start revolutions based on troop strength! - CONTINUED');
+    $sdl->error('Could not query planets data to start revolutions based on troop strength! - CONTINUED');
 }
 
 $n_revolution=0;
@@ -997,7 +994,7 @@ while($planet = $db->fetchrow($q_planets)) {
     $rand=rand(0,100);
     if ($rand==2)
     {
-        $sdl->log('Planet '.$planet['planet_name'].' ('.$planet['planet_id'].') taken over by NPC');
+        $sdl->info('Planet '.$planet['planet_name'].' ('.$planet['planet_id'].') taken over by NPC');
 
         $sql = 'UPDATE planets
                         SET planet_owner='.INDEPENDENT_USERID.',
@@ -1043,10 +1040,10 @@ while($planet = $db->fetchrow($q_planets)) {
                         unittrainid_nexttime=0
                         WHERE planet_id = '.$planet['planet_id'];
 
-        $sdl->log('<b>Overtake:</b> Planet '.$planet['planet_name'].' ('.$planet['planet_id'].') | Troops: '.($planet['unit_1']*2+$planet['unit_2']*3+$planet['unit_3']*4+$planet['unit_4']*4).'    Needed: '.$planet['min_security_troops'].'   Factor: '.(($planet['unit_1']*2+$planet['unit_2']*3+$planet['unit_3']*4+$planet['unit_4']*4)/$planet['min_security_troops']).'   Points: '.$planet['planet_points']);
+        $sdl->debug('<b>Overtake:</b> Planet '.$planet['planet_name'].' ('.$planet['planet_id'].') | Troops: '.($planet['unit_1']*2+$planet['unit_2']*3+$planet['unit_3']*4+$planet['unit_4']*4).'    Needed: '.$planet['min_security_troops'].'   Factor: '.(($planet['unit_1']*2+$planet['unit_2']*3+$planet['unit_3']*4+$planet['unit_4']*4)/$planet['min_security_troops']).'   Points: '.$planet['planet_points']);
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not perform revolution on planet <b>'.$planet['planet_id'].'</b>! - CONTINUED');
+            $sdl->error('Could not perform revolution on planet <b>'.$planet['planet_id'].'</b>! - CONTINUED');
         }
 
 // DC ---- History record in planet_details, with label '27'
@@ -1055,7 +1052,7 @@ while($planet = $db->fetchrow($q_planets)) {
                 VALUES ('.$planet['planet_id'].', '.$planet['planet_owner'].', '.$planet['user_alliance'].', '.$planet['planet_owner'].', '.$planet['user_alliance'].', '.time().', 27)';
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not update planet details <b>'.$planet['planet_id'].'</b>! - CONTINUED');
+            $sdl->error('Could not update planet details <b>'.$planet['planet_id'].'</b>! - CONTINUED');
         }
 // DC ----
 
@@ -1084,7 +1081,7 @@ while($planet = $db->fetchrow($q_planets)) {
 
         if(!$db->query('SET @i=0'))
         {
-            $sdl->log('<b>Error:</b> Could not set sql iterator variable for planet owner enum! - CONTINUED');
+            $sdl->error('Could not set sql iterator variable for planet owner enum! - CONTINUED');
         }
         else
         {
@@ -1094,7 +1091,7 @@ while($planet = $db->fetchrow($q_planets)) {
                     ORDER BY planet_owned_date ASC, planet_id ASC';
 
             if(!$db->query($sql)) {
-                $sdl->log('<b>Error:</b> Could not update planet owner enum data! - CONTINUED');
+                $sdl->error('Could not update planet owner enum data! - CONTINUED');
             }
         }
     }
@@ -1118,7 +1115,7 @@ $sql = 'SELECT p.*,
         WHERE p.recompute_static = 1';
 
 if(($q_planets = $db->query($sql)) === false) {
-    $sdl->log('<b>Error:</b> Could not query planets data to recompute static planet values! - SKIPPED');
+    $sdl->error('Could not query planets data to recompute static planet values! - SKIPPED');
 }
 else {
     $n_recomputed = 0;
@@ -1154,7 +1151,7 @@ else {
                 WHERE planet_id = '.$planet['planet_id'];
                 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not update recomputed static values of planet <b>'.$planet['planet_id'].'</b>! - CONTINUED');
+            $sdl->error('Could not update recomputed static values of planet <b>'.$planet['planet_id'].'</b>! - CONTINUED');
         }
 
         ++$n_recomputed;
@@ -1163,10 +1160,9 @@ else {
 
 $sdl->finish_job('Recompute Static Planet Values');
 
-
 // ########################################################################################
 // ########################################################################################
-// Update Planets
+// Update Planets Security Troops
 $sdl->start_job('Update Planet Security Troops');
 // AC: 07/01/15 - Starting from mySQL 5.5+ queries involving out of range values are interrupted.
 //                At the moment there are no control on troops available on Settlers and Borg
@@ -1174,17 +1170,25 @@ $sdl->start_job('Update Planet Security Troops');
 //                More details here: https://github.com/stfc2/Scheduler/issues/2.
 $sql='UPDATE IGNORE planets SET min_security_troops=POW(planet_owner_enum*'.MIN_TROOPS_PLANET.',1+planet_owner_enum*0.01)
       WHERE planet_owner <> '.INDEPENDENT_USERID.' AND planet_owner <> '.BORG_USERID;
-if(!$db->query($sql)) {$sdl->log(' - <b>Warning:</b> Could not execute query '.$sql);}
-foreach ($PLANETS_DATA as $key => $planet) {
-$sql='UPDATE planets SET min_security_troops='.$planet[7].' WHERE planet_type="'.$key.'" AND min_security_troops>'.$planet[7];
-if(!$db->query($sql)) {$sdl->log(' - <b>Warning:</b> Could not execute query '.$sql);}
+if(!$db->query($sql)) 
+{
+	$sdl->error('Could not execute query '.$sql);
 }
+
+foreach ($PLANETS_DATA as $key => $planet) 
+{
+	$sql='UPDATE planets SET min_security_troops='.$planet[7].' WHERE planet_type="'.$key.'" AND min_security_troops>'.$planet[7];
+	if(!$db->query($sql)) 
+	{
+		$sdl->error('Could not execute query '.$sql);
+	}
+}
+
 $sdl->finish_job('Update Planet Security Troops');
 
-
-
-
-
+// ########################################################################################
+// ########################################################################################
+// Update Planets
 $sdl->start_job('Update Planets');
 
 $POINTS_EXP = 1.5;
@@ -1216,7 +1220,7 @@ $sql = 'UPDATE planets
         WHERE planet_owner <> 0';
 
 if(!$db->query($sql)) {
-    $sdl->log(' - <b>Warning:</b> Could not update planet points and resources! - CONTINUED');
+    $sdl->error('Could not update planet points and resources! - CONTINUED');
 }
 
 $n_planets = $db->affected_rows();
@@ -1231,9 +1235,8 @@ $sql = 'UPDATE planets p,user u, alliance a
               a.taxes > 0';
 
 if(!$db->query($sql)) {
-    $sdl->log(' - <b>Warning:</b> Could not update planets tax data! - CONTINUED');
+    $sdl->error('Could not update planets tax data! - CONTINUED');
 }
-
 
 // AC: 07/01/15 - Avoid reducing resources on unhabitated planets, since
 //                for some reasons min_security_troops could not be zero
@@ -1247,12 +1250,8 @@ $sql = 'UPDATE planets
         WHERE planet_owner <> 0 AND min_security_troops > unit_1*2+unit_2*3+unit_3*4+unit_4*4';
 
 if(!$db->query($sql)) {
-    $sdl->log(' - Warning: Could not update planets resource-diff-troops data! - CONTINUED');
+    $sdl->warn('Could not update planets resource-diff-troops data! - CONTINUED');
 }
-
-
-
-
 
 $sql = 'UPDATE planets
         SET resource_1 = max_resources
@@ -1260,7 +1259,7 @@ $sql = 'UPDATE planets
               resource_1 > max_resources';
 
 if(!$db->query($sql)) {
-    $sdl->log(' - Warning: Could not update planet max resources 1! - CONTINUED');
+    $sdl->warn('Could not update planet max resources 1! - CONTINUED');
 }
 
 $sql = 'UPDATE planets
@@ -1269,7 +1268,7 @@ $sql = 'UPDATE planets
               resource_2 > max_resources';
 
 if(!$db->query($sql)) {
-    $sdl->log(' - Warning: Could not update planet max resources 2! - CONTINUED');
+    $sdl->warn('Could not update planet max resources 2! - CONTINUED');
 }
 
 $sql = 'UPDATE planets
@@ -1278,7 +1277,7 @@ $sql = 'UPDATE planets
               resource_3 > max_resources';
 
 if(!$db->query($sql)) {
-    $sdl->log('- Warning: Could not update planet max resources 3! - CONTINUED');
+    $sdl->warn('Could not update planet max resources 3! - CONTINUED');
 }
 
 $sql = 'UPDATE planets
@@ -1287,7 +1286,7 @@ $sql = 'UPDATE planets
               resource_4 > max_worker';
 
 if(!$db->query($sql)) {
-    $sdl->log(' - Warning: Could not update planet max resources 4! - CONTINUED');
+    $sdl->warn('Could not update planet max resources 4! - CONTINUED');
 }
 
 
@@ -1307,7 +1306,7 @@ $sql = 'UPDATE IGNORE planets
               (unit_1 * 2 + unit_2 * 3 + unit_3 * 4 + unit_4 * 4 + unit_5 * 4 + unit_6 * 4) > max_units';
 
 if(!$db->query($sql)) {
-    $sdl->log('- Warning: Could not update planets max units data by unit 1! - CONTINUED');
+    $sdl->warn('Could not update planets max units data by unit 1! - CONTINUED');
 }
 
 // Unit-2
@@ -1317,7 +1316,7 @@ $sql = 'UPDATE IGNORE planets
               (unit_2 * 3 + unit_3 * 4 + unit_4 * 4 + unit_5 * 4 + unit_6 * 4) > max_units';
 
 if(!$db->query($sql)) {
-    $sdl->log('- Warning: Could not update planets max units data by unit 2! - CONTINUED');
+    $sdl->warn('Could not update planets max units data by unit 2! - CONTINUED');
 }
 
 // Unit-3
@@ -1327,7 +1326,7 @@ $sql = 'UPDATE IGNORE planets
               (unit_3 * 4 + unit_4 * 4 + unit_5 * 4 + unit_6 * 4) > max_units';
 
 if(!$db->query($sql)) {
-    $sdl->log('- Warning: Could not update planets max units data by unit 3! - CONTINUED');
+    $sdl->warn('Could not update planets max units data by unit 3! - CONTINUED');
 }
 
 // Unit-4
@@ -1337,7 +1336,7 @@ $sql = 'UPDATE IGNORE planets
               (unit_4 * 4 + unit_5 * 4 + unit_6 * 4) > max_units';
 
 if(!$db->query($sql)) {
-    $sdl->log('- Warning: Could not update planets max units data by unit 4! - CONTINUED');
+    $sdl->warn('Could not update planets max units data by unit 4! - CONTINUED');
 }
 
 // Unit-5
@@ -1347,7 +1346,7 @@ $sql = 'UPDATE IGNORE planets
               (unit_5 * 4 + unit_6 * 4) > max_units';
 
 if(!$db->query($sql)) {
-    $sdl->log('- Warning: Could not update planets max units data by unit 5! - CONTINUED');
+    $sdl->warn('Could not update planets max units data by unit 5! - CONTINUED');
 }
 
 // Unit-6
@@ -1357,7 +1356,7 @@ $sql = 'UPDATE IGNORE planets
               (unit_6 * 4) > max_units';
 
 if(!$db->query($sql)) {
-    $sdl->log('- Warning: Could not update planets max units data by unit 6! - CONTINUED');
+    $sdl->warn('Could not update planets max units data by unit 6! - CONTINUED');
 }
 
 
@@ -1369,7 +1368,7 @@ $sql = 'UPDATE planets
         SET planet_attacked = 0';
 
 if(!$db->query($sql)) {
-    $sdl->log('- Warning: Could not zero planet attacked data! CONTINUED');
+    $sdl->warn('Could not zero planet attacked data! CONTINUED');
 }
 
 $sql = 'UPDATE planets p, scheduler_shipmovement ss
@@ -1380,15 +1379,11 @@ $sql = 'UPDATE planets p, scheduler_shipmovement ss
               ss.move_status = 0';
 
 if(!$db->query($sql)) {
-    $sdl->log('- Warning: Could not update planet attacked data! CONTINUED');
+    $sdl->warn('Could not update planet attacked data! CONTINUED');
 }
 */
 
 $sdl->finish_job('Update Planets');
-
-
-
-
 
 // ########################################################################################
 // ########################################################################################
@@ -1401,7 +1396,7 @@ $sql = 'UPDATE planets
 
 
 if(!$db->query($sql)) {
-    $sdl->log('- Warning: Could not zero planet attacked data! - CONTINUED');
+    $sdl->warn('Could not zero planet attacked data! - CONTINUED');
 }
 
 $already_processed = array();
@@ -1419,7 +1414,7 @@ $sql = 'SELECT ss.*,
         ORDER BY ss.move_finish ASC';
 
 if(!$q_moves = $db->query($sql)) {
-    $sdl->log('- Error: Could not select moves data for planet attacked! - SKIPPED');
+    $sdl->error('Could not select moves data for planet attacked! - SKIPPED');
 }
 else {
     while($move = $db->fetchrow($q_moves)) {
@@ -1438,7 +1433,7 @@ else {
                 GROUP BY ss.move_id';
 
         if(($move_ships = $db->queryrow($sql)) === false) {
-            $sdl->log('- Error: Could not select moves fleet detail data! - SKIPPED');
+            $sdl->error('Could not select moves fleet detail data! - SKIPPED');
 
             break;
         }
@@ -1460,7 +1455,7 @@ else {
                       f.user_id <> '.$move['dest_user_id'];
 
         if(!$q_user = $db->query($sql)) {
-            $sdl->log('- Error: Could not select friendly user data! - SKIPPED');
+            $sdl->error('Could not select friendly user data! - SKIPPED');
 
             break;
         }
@@ -1491,7 +1486,7 @@ else {
                       f.planet_id = '.$move['dest'];
 
         if(($friendly_ships = $db->queryrow($sql)) === false) {
-            $sdl->log('- Error: Could not select friendly fleets data! - SKIPPED');
+            $sdl->error('Could not select friendly fleets data! - SKIPPED');
 
             break;
         }
@@ -1514,7 +1509,7 @@ else {
                 WHERE planet_id = '.$move['dest'];
 
         if(!$db->query($sql)) {
-            $sdl->log('- Warning: Could not update planet attacked data! - CONTINUED');
+            $sdl->warn('Could not update planet attacked data! - CONTINUED');
         }
     }
 }
@@ -1559,7 +1554,7 @@ $sql = 'UPDATE planets
         SET planet_next_attack = '.(time()+($move['move_finish']-$ACTUAL_TICK)*300).', planet_attack_ships = '.$move['n_ships'].', planet_attack_type= '.$move['action_code'].' WHERE planet_id= '.$planet['planet_id'];
 
 if(!$db->query($sql)) {
-    $sdl->log('- Warning: Could not set planet attacked data! CONTINUED');
+    $sdl->warn('Could not set planet attacked data! CONTINUED');
 }
 }
 
@@ -1584,7 +1579,7 @@ $sql = 'SELECT u.user_id, u.user_alliance,
         ORDER BY u.user_id ASC';
 
 if(($q_players = $db->query($sql)) === false) {
-    $sdl->log('<b>Error:</b> Query users failed! - SKIPPED');
+    $sdl->error('Query users failed! - SKIPPED');
 }
 else {
     $n_players = 0;
@@ -1596,7 +1591,7 @@ else {
                 WHERE user_id = '.$user['user_id'];
 
         if(!$db->query($sql)) {
-            $sdl->log('- Warning: Could not update player data #'.$user['user_id'].'! - CONTINUED');
+            $sdl->warn('Could not update player data #'.$user['user_id'].'! - CONTINUED');
 
             continue;
         }
@@ -1613,7 +1608,7 @@ $sql = 'UPDATE user
               user_auth_level = '.STGC_BOT;
 
 if(!$db->query($sql)) {
-    $sdl->log('- Warning: Could not update Admin/BOT player data! - CONTINUED');
+    $sdl->warn('Could not update Admin/BOT player data! - CONTINUED');
 }
 
 $sdl->finish_job('Update Players');
@@ -1628,7 +1623,7 @@ $update_problem=0;
 $sdl->start_job('Update Alliance Points');
 
 if(!$db->query('UPDATE alliance SET alliance_points = 1')) {
-    $sdl->log('<b>Error:</b> Set alliance points to 1 failed. - CONTINUED');
+    $sdl->error('Set alliance points to 1 failed. - CONTINUED');
 }
 
 $sql = 'SELECT a.alliance_id,
@@ -1641,7 +1636,7 @@ $sql = 'SELECT a.alliance_id,
         GROUP BY a.alliance_id';
 
 if(($q_alliance = $db->query($sql)) === false) {
-    $sdl->log('<b>Error:</b> Query alliances failed! - SKIPPED');
+    $sdl->error('Query alliances failed! - SKIPPED');
     $update_problem=1;
 }
 else {
@@ -1657,7 +1652,7 @@ else {
                     WHERE alliance_id = '.$alliance['alliance_id'];
 
             if(!$db->query($sql)) {
-                $sdl->log('- Warning: Could not update alliance data #'.$alliance['alliance_id'].'! - CONTINUED');
+                $sdl->warn('Could not update alliance data #'.$alliance['alliance_id'].'! - CONTINUED');
                 $update_problem=1;
                 continue;
             }
@@ -1682,7 +1677,7 @@ if (isset($update_problem) && $update_problem==0)
             WHERE alliance_points = 1';
 
     if(!$db->query($sql)) {
-        $sdl->log('- Warning: Could not remove alliances! - CONTINUED');
+        $sdl->warn('Could not remove alliances! - CONTINUED');
     }
 }
 $sdl->finish_job('Remove non-existing alliances');
@@ -1697,7 +1692,7 @@ $sdl->start_job('Update Ranking');
 
 // Points of the players
 if(!$db->query('SET @i=0')) {
-    $sdl->log('- Error: Could not initialize @i for user points ranking! CONTINUE');
+    $sdl->error('Could not initialize @i for user points ranking! CONTINUE');
 }
 else {
     $sql = 'UPDATE user
@@ -1705,13 +1700,13 @@ else {
             WHERE user_active=1 ORDER BY user_points DESC';
 
     if(!$db->query($sql)) {
-        $sdl->log('- Error: Could not update user points ranking! CONTINUE');
+        $sdl->error('Could not update user points ranking! CONTINUE');
     }
 }
 
 // Planet of the players
 if(!$db->query('SET @i=0')) {
-    $sdl->log('- Error: Could not initialize @i for user planets ranking! CONTINUE');
+    $sdl->error('Could not initialize @i for user planets ranking! CONTINUE');
 }
 else {
     $sql = 'UPDATE user
@@ -1719,13 +1714,13 @@ else {
             WHERE user_active=1 ORDER BY user_planets DESC';
 
     if(!$db->query($sql)) {
-        $sdl->log('- Error: Could not update user planets ranking! CONTINUE');
+        $sdl->error('Could not update user planets ranking! CONTINUE');
     }
 }
 
 // Honor of the players
 if(!$db->query('SET @i=0')) {
-    $sdl->log('- Error: Could not initialize @i for user honor ranking! CONTINUE');
+    $sdl->error('Could not initialize @i for user honor ranking! CONTINUE');
 }
 else {
     $sql = 'UPDATE user
@@ -1733,13 +1728,13 @@ else {
             WHERE user_active=1 ORDER BY user_honor DESC';
 
     if(!$db->query($sql)) {
-        $sdl->log('- Error: Could not update user honor ranking! CONTINUE');
+        $sdl->error('Could not update user honor ranking! CONTINUE');
     }
 }
 
 // Points of the Alliances
 if(!$db->query('SET @i=0')) {
-    $sdl->log('- Error: Could not initialize @i for alliance points ranking! CONTINUE');
+    $sdl->error('Could not initialize @i for alliance points ranking! CONTINUE');
 }
 else {
     $sql = 'UPDATE alliance
@@ -1747,13 +1742,13 @@ else {
             ORDER BY alliance_points DESC';
 
     if(!$db->query($sql)) {
-        $sdl->log('- Error: Could not update alliance points ranking! CONTINUE');
+        $sdl->error('Could not update alliance points ranking! CONTINUE');
     }
 }
 
 // Avg points of the Alliances
 if(!$db->query('SET @i=0')) {
-    $sdl->log('- Error: Could not initialize @i for alliance points avg ranking! CONTINUE');
+    $sdl->error('Could not initialize @i for alliance points avg ranking! CONTINUE');
 }
 else {
     $sql = 'UPDATE alliance
@@ -1761,13 +1756,13 @@ else {
             ORDER BY alliance_points/alliance_member DESC';
 
     if(!$db->query($sql)) {
-        $sdl->log('- Error: Could not update alliance points avg ranking! CONTINUE');
+        $sdl->error('Could not update alliance points avg ranking! CONTINUE');
     }
 }
 
 // Planets of the Alliances
 if(!$db->query('SET @i=0')) {
-    $sdl->log('- Error: Could not initialize @i for alliance planets ranking! CONTINUE');
+    $sdl->error('Could not initialize @i for alliance planets ranking! CONTINUE');
 }
 else {
     $sql = 'UPDATE alliance
@@ -1775,13 +1770,13 @@ else {
             ORDER BY alliance_planets DESC';
 
     if(!$db->query($sql)) {
-        $sdl->log('- Error: Could not update alliance planets ranking! CONTINUE');
+        $sdl->error('Could not update alliance planets ranking! CONTINUE');
     }
 }
 
 // Honor of the Alliances
 if(!$db->query('SET @i=0')) {
-    $sdl->log('- Error: Could not initialize @i for alliance honor ranking! CONTINUE');
+    $sdl->error('Could not initialize @i for alliance honor ranking! CONTINUE');
 }
 else {
     $sql = 'UPDATE alliance
@@ -1789,7 +1784,7 @@ else {
             ORDER BY alliance_honor DESC';
 
     if(!$db->query($sql)) {
-        $sdl->log('- Error: Could not update alliance honor ranking! CONTINUE');
+        $sdl->error('Could not update alliance honor ranking! CONTINUE');
     }
 }
 
@@ -1803,7 +1798,7 @@ $sdl->finish_job('Update Ranking');
 $sdl->start_job('Alliance Taxes');
 $sql = 'SELECT alliance_id,taxes FROM alliance WHERE taxes>0';
 if(($q_alliances = $db->query($sql)) === false) {
-    $sdl->log('<b>Error:</b> Query alliances failed! - SKIPPED');
+    $sdl->error('Query alliances failed! - SKIPPED');
 }
 else {
     while($alliance = $db->fetchrow($q_alliances)) {
@@ -1813,7 +1808,7 @@ else {
                                     taxes_3=taxes_3+'.$tax[2].'
                 WHERE alliance_id = '.$alliance['alliance_id'];
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Update alliances failed : "<i>'.$sql.'</i>" CONTINUED');
+            $sdl->error('Update alliances failed : "<i>'.$sql.'</i>" CONTINUED');
         }
     }
 }
@@ -1829,11 +1824,11 @@ $sdl->start_job('Ferengi Taxes');
 
 if (time()-$cfg_data['last_paytime']>3600*24)
 {
-    $sdl->log('Start Payment');
+    $sdl->info('Start Payment');
     $ferengi_players=$db->queryrow('SELECT COUNT(user_id) AS num FROM user WHERE user_active=1 AND user_auth_level=1 AND user_race=5');
     if ($ferengi_players['num']>0 && $cfg_data['ferengitax_1']/$ferengi_players['num']+$cfg_data['ferengitax_2']/$ferengi_players['num']+$cfg_data['ferengitax_3']/$ferengi_players['num']>300)
     {
-        $sdl->log('Start Payment2');
+        $sdl->info('Start Payment2');
         $db->query('UPDATE config SET ferengitax_1=0, ferengitax_2=0, ferengitax_3=0, last_paytime='.time());
 
         $resource[0]=$cfg_data['ferengitax_1']/$ferengi_players['num']*5;
@@ -1847,18 +1842,18 @@ if (time()-$cfg_data['last_paytime']>3600*24)
                                 WHERE u.user_active=1 AND u.user_id=p.planet_owner AND u.user_race=5
         ');
 
-        $sdl->log('Pay: '.$ferengi_players['num'].' ('.$db->num_rows().') Players with '.$cfg_data['ferengitax_1'].'/'.$cfg_data['ferengitax_2'].'/'.$cfg_data['ferengitax_3'].'!');
+        $sdl->info('Pay: '.$ferengi_players['num'].' ('.$db->num_rows().') Players with '.$cfg_data['ferengitax_1'].'/'.$cfg_data['ferengitax_2'].'/'.$cfg_data['ferengitax_3'].'!');
 
 
         while(($user = $db->fetchrow($player_qry))==true)
         {
-            $sdl->log('1');
+            $sdl->debug('1');
             $log_data=array(
                 'resource_1' => round($resource[0],0),
                 'resource_2' => round($resource[1],0),
                 'resource_3' => round($resource[2],0),
             );
-            $sdl->log('2');
+            $sdl->debug('2');
 
             /* 16/05/08 - AC: Add logbook title translation */
             $log_title = 'Ferengi Taxes';
@@ -1874,7 +1869,7 @@ if (time()-$cfg_data['last_paytime']>3600*24)
             /* */
 
             add_logbook_entry($user['user_id'], LOGBOOK_FERENGITAX, $log_title, $log_data);
-            $sdl->log('3');
+            $sdl->debug('3');
             $res=$resource[0]+$resource[1]+$resource[2];
             $ships=ceil($res/MAX_TRANSPORT_RESOURCES);
             if (1==$user['planet_system']) $distance=6;
@@ -1888,10 +1883,9 @@ if (time()-$cfg_data['last_paytime']>3600*24)
 
             $db->query('INSERT INTO scheduler_resourcetrade (planet,resource_1,resource_2,resource_3,arrival_time) VALUES ("'.$user['user_capital'].'","'.$resource[0].'","'.$resource[1].'","'.$resource[2].'","'.($ACTUAL_TICK+$distance).'")');
             //send_fake_transporter(array(FERENGI_TRADESHIP_ID=>$ships), FERENGI_USERID,5 ,$user['user_capital']);
-            $sdl->log('4: '.$distance);
+            $sdl->debug('4: '.$distance);
 
-            $sdl->log('5');
-            $sdl->log('Paid '.$user['user_name'].' ('.$user['user_id'].')!');
+            $sdl->info('Paid '.$user['user_name'].' ('.$user['user_id'].')!');
         }
     }
 }
@@ -1905,9 +1899,9 @@ $sdl->finish_job('Ferengi Taxes');
 $sdl->start_job('Remove old Resourcetrade');
 $sql = 'DELETE FROM resource_trade WHERE timestamp<'.(time()-3600*24*8);
 if(($d_rtrade = $db->query($sql)) === false) {
-    $sdl->log('<b>Error:</b> Could not remove old resourcetrade data! CONTINUED');
+    $sdl->error('Could not remove old resourcetrade data! CONTINUED');
 }
-$sdl->log('Affected '.$db->affected_rows().' resourcetrades');
+$sdl->info('Affected '.$db->affected_rows().' resourcetrades');
 $sdl->finish_job('Remove old Resourcetrade');
 
 
@@ -1944,7 +1938,7 @@ $sql = 'DELETE FROM user
               user_registration_time < '.($game->TIME - (49 * 60 * 60));
 
 if(!$db->query($sql)) {
-    $sdl->log('<b>Notice:</b> Could not delete inactivated users! CONTINUED');
+    $sdl->warn('Could not delete inactivated users! CONTINUED');
 }
 
 
@@ -1957,7 +1951,7 @@ $sql = 'UPDATE user
         WHERE user_vacation_end = '.$ACTUAL_TICK;
 
 if(!$db->query($sql)) {
-    $sdl->log('<b>Notice:</b> Could not update back from vacation user_active data! CONTINUED');
+    $sdl->warn('Could not update back from vacation user_active data! CONTINUED');
 }
 
 
@@ -1969,7 +1963,7 @@ $sql = 'SELECT user_id, user_name, user_auth_level, user_points, user_planets
               user_active=1 AND user_id>11';
 
 if(!$q_user = $db->query($sql)) {
-    $sdl->log('<b>Notice:</b> Could not query inactive user! CONTINUED');
+    $sdl->warn('Could not query inactive user! CONTINUED');
 }
 else {
     while($user = $db->fetchrow($q_user)) {
@@ -1979,10 +1973,10 @@ else {
                     WHERE user_id = '.$user['user_id'];
 
             if(!$db->query($sql)) {
-                $sdl->log('<b>Notice:</b> Could not set inactive user to user_active = 4! CONTINUED');
+                $sdl->warn('Could not set inactive user to user_active = 4! CONTINUED');
             }
             else {
-                $sdl->log('- Going to delete inactive user (UID: '.$user['user_id'].', Name: '.$user['user_name'].', Auth: '.$user['user_auth_level'].', Points: '.$user['user_points'].', Planets: '.$user['user_planets'].')');
+                $sdl->info('- Going to delete inactive user (UID: '.$user['user_id'].', Name: '.$user['user_name'].', Auth: '.$user['user_auth_level'].', Points: '.$user['user_points'].', Planets: '.$user['user_planets'].')');
             }
         }
     }
@@ -2001,7 +1995,7 @@ $sql = 'SELECT user_id, user_name, user_auth_level, user_points, user_planets
         AND user_id>11';
 
 if(!$q_user = $db->query($sql)) {
-    $sdl->log('<b>Notice:</b> Could not query inactive user #2! CONTINUED');
+    $sdl->warn('Could not query inactive user #2! CONTINUED');
 }
 else {
     while($user = $db->fetchrow($q_user)) {
@@ -2011,10 +2005,10 @@ else {
                     WHERE user_id = '.$user['user_id'];
 
             if(!$db->query($sql)) {
-                $sdl->log('<b>Notice:</b> Could not set inactive user #2 to user_active = 4! CONTINUED');
+                $sdl->warn('Could not set inactive user #2 to user_active = 4! CONTINUED');
             }
             else {
-                $sdl->log('- Going to delete inactive user #2 (UID: '.$user['user_id'].', Name: '.$user['user_name'].', Auth: '.$user['user_auth_level'].', Points: '.$user['user_points'].', Planets: '.$user['user_planets'].')');
+                $sdl->info('- Going to delete inactive user #2 (UID: '.$user['user_id'].', Name: '.$user['user_name'].', Auth: '.$user['user_auth_level'].', Points: '.$user['user_points'].', Planets: '.$user['user_planets'].')');
             }
         }
     }
@@ -2033,7 +2027,7 @@ $sql = 'SELECT u.user_id, u.user_active, u.user_auth_level, u.user_points, u.use
         WHERE u.user_active = 4';
 
 if(!$q_user = $db->query($sql)) {
-    $sdl->log('<b>Notice:</b> Could not query deletable user data! CONTINUED');
+    $sdl->warn('Could not query deletable user data! CONTINUED');
 }
 else {
     while($user = $db->fetchrow($q_user)) {
@@ -2060,11 +2054,11 @@ else {
                     LIMIT 1';
 
             if(($other_admin = $db->queryrow($sql)) === false) {
-                $sdl->log('<b>Notice:</b> Could not query another alliance admin - possible alliance without president! CONTINUED!');
+                $sdl->warn('Could not query another alliance admin - possible alliance without president! CONTINUED!');
             }
             else {
                 if(empty($other_admin['user_id'])) {
-                    $sdl->log('<b>Notice:</b> Could not find another alliance admin - possible alliance without president! CONTINUED');
+                    $sdl->warn('Could not find another alliance admin - possible alliance without president! CONTINUED');
                 }
                 else {
                     $sql = 'UPDATE user, alliance
@@ -2240,14 +2234,14 @@ else {
             WHERE planet_owner = '.$user['user_id'];
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not give deleted users\'s planets to the settlers! CONTIUED');
+            $sdl->error('Could not give deleted users\'s planets to the settlers! CONTIUED');
         }
 
         /* 25/06/08 - AC: Set logbook messages flag to read in order to be cleaned up */
         $sql = 'UPDATE logbook SET log_read=1 WHERE user_id = '.$user['user_id'];
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not set logbook message to read! CONTIUED');
+            $sdl->error('Could not set logbook message to read! CONTIUED');
         }
 
         /* 07/05/14 - AC: Too many users create and delete their accounts leave the entries in the DB
@@ -2256,10 +2250,10 @@ else {
         $sql = 'UPDATE user SET user_active = 5 WHERE user_id = '.$user['user_id'];
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not delete final user data! CONTIUED');
+            $sdl->error('Could not delete final user data! CONTIUED');
         }
         else {
-            $sdl->log('- Deleted user #'.$user['user_id'].' Name '.$user['user_name'].' because user_active = 4');
+            $sdl->info('- Deleted user #'.$user['user_id'].' Name '.$user['user_name'].' because user_active = 4');
         }
     }
 }
@@ -2270,12 +2264,12 @@ else {
 $sql = 'SELECT user_id, user_name FROM user WHERE user_active = 3 AND last_active < '.($game->TIME - (3 * 60 * 60));
 
 if(!$undel_user = $db->query($sql)) {
-    $sdl->log('<b>Notice:</b> Could not select user_active = 3 data! CONTINUED');
+    $sdl->warn('Could not select user_active = 3 data! CONTINUED');
 }
 else {
     while($user = $db->fetchrow($undel_user)) {
   
-        $sdl->log('- User <b>#'.$user['user_id'].'</b> ( '.$user['user_name'].'  ) has requested deletion, but not confirmed! (Fake attempt?)');
+        $sdl->info('- User <b>#'.$user['user_id'].'</b> ( '.$user['user_name'].'  ) has requested deletion, but not confirmed! (Fake attempt?)');
 
         $sql = 'UPDATE user
                 SET user_active = 1
@@ -2283,7 +2277,7 @@ else {
                       last_active < '.($game->TIME - (3 * 60 * 60));
     
         if(!$db->query($sql)) {
-            $sdl->log('<b>Notice:</b> Could not set back user_active = 1 data! CONTINUED');
+            $sdl->warn('Could not set back user_active = 1 data! CONTINUED');
         }
     }
 }
@@ -2312,10 +2306,10 @@ $sql = 'SELECT f.*,
         GROUP BY f.fleet_id';
 
 if(!$q_fleets = $db->query($sql)) {
-    $sdl->log('<b>Error:</b> Could not query fleets main data!');
+    $sdl->error('Could not query fleets main data!');
 }
 
-$sdl->log('<b>'.$db->num_rows($q_fleets).'</b> Fleets of ships found.');
+$sdl->info('<b>'.$db->num_rows($q_fleets).'</b> Fleets of ships found.');
 
 while($fleet = $db->fetchrow($q_fleets)) {
     $fleet_id = (int)$fleet['fleet_id'];
@@ -2325,10 +2319,10 @@ while($fleet = $db->fetchrow($q_fleets)) {
                 WHERE fleet_id = '.$fleet_id;
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not delete empty fleets data');
+            $sdl->error('Could not delete empty fleets data');
         }
 
-        $sdl->log('Fleet: <b>'.$fleet_id.'</b>; (Non-secure MoveID: '.$fleet['move_id'].' [Type: '.$fleet['action_code'].']) Fleet is empty. Deleted');
+        $sdl->info('Fleet: <b>'.$fleet_id.'</b>; (Non-secure MoveID: '.$fleet['move_id'].' [Type: '.$fleet['action_code'].']) Fleet is empty. Deleted');
 
         // 21/03/11 - AC: Ensure there's no ship with this fleet id.
         $sql = 'UPDATE ships
@@ -2336,7 +2330,7 @@ while($fleet = $db->fetchrow($q_fleets)) {
                 WHERE fleet_id = '.$fleet_id;
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not update ships fleet_id data');
+            $sdl->error('Could not update ships fleet_id data');
         }
     }
 
@@ -2345,17 +2339,17 @@ while($fleet = $db->fetchrow($q_fleets)) {
                 WHERE fleet_id = '.$fleet_id;
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not delete ships data');
+            $sdl->error('Could not delete ships data');
         }
 
         $sql = 'DELETE FROM ship_fleets
                 WHERE fleet_id = '.$fleet_id;
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not delete fleets data');
+            $sdl->error('Could not delete fleets data');
         }
 
-        $sdl->log('Fleet: <b>'.$fleet_id.'</b>; Player no longer exists. Ships and fleets removed');
+        $sdl->info('Fleet: <b>'.$fleet_id.'</b>; Player no longer exists. Ships and fleets removed');
     }
 
     if($fleet['real_n_ships'] != $fleet['n_ships']) {
@@ -2364,35 +2358,35 @@ while($fleet = $db->fetchrow($q_fleets)) {
                 WHERE fleet_id = '.$fleet_id;
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not update fleet n_ships data');
+            $sdl->error('Could not update fleet n_ships data');
         }
 
-        $sdl->log('Fleet: <b>'.$fleet_id.'</b> (Non-secure MoveID: '.$fleet['move_id'].' [Type: '.$fleet['action_code'].'])</b>; Wrong ship numbers. Solved');
+        $sdl->info('Fleet: <b>'.$fleet_id.'</b> (Non-secure MoveID: '.$fleet['move_id'].' [Type: '.$fleet['action_code'].'])</b>; Wrong ship numbers. Solved');
     }
 
     $RESET_FLEET = 0;
 
     if( (empty($fleet['planet_id'])) && (empty($fleet['move_id'])) ) {
-        $sdl->log('Ghost fleet: <b>'.$fleet_id.'</b>; No position data. Attempts repositioning');
+        $sdl->info('Ghost fleet: <b>'.$fleet_id.'</b>; No position data. Attempts repositioning');
         $RESET_FLEET = $fleet['user_capital'];
     }
     elseif( (!empty($fleet['planet_id'])) && (!empty($fleet['move_id'])) ) {
-        $sdl->log('Ghost fleet: <b>'.$fleet_id.'</b>; Corrupt position data. Attempts repositioning');
+        $sdl->info('Ghost fleet: <b>'.$fleet_id.'</b>; Corrupt position data. Attempts repositioning');
         $RESET_FLEET = $fleet['planet_id'];
     }
     elseif(!empty($fleet['move_id'])) {
         $move_status = (int)$fleet['move_status'];
 
         if( ($move_status > 10) && ($move_status < 40) ) {
-            $sdl->log('Ghost fleet: <b>'.$fleet_id.'</b>; Incomplete Move: <b>[Type: '.$fleet['action_code'].'] [Type: '.$fleet['action_code'].']</b>. Attempts repositioning');
+            $sdl->info('Ghost fleet: <b>'.$fleet_id.'</b>; Incomplete Move: <b>[Type: '.$fleet['action_code'].'] [Type: '.$fleet['action_code'].']</b>. Attempts repositioning');
             $RESET_FLEET = $fleet['dest'];
         }
         elseif( ($move_status > 30) && ($move_status < 40) ) {
-            $sdl->log('Ghost fleet: <b>'.$fleet_id.'</b>; Incomplete Move: <b>'.$fleet['move_id'].' [Type: '.$fleet['action_code'].']</b>. Attempts repositioning');
+            $sdl->info('Ghost fleet: <b>'.$fleet_id.'</b>; Incomplete Move: <b>'.$fleet['move_id'].' [Type: '.$fleet['action_code'].']</b>. Attempts repositioning');
             $RESET_FLEET = $fleet['start'];
         }
         elseif( ($move_status == 4) ) { // Recall a fleet of colo or recall the first tick
-            $sdl->log('Ghost fleet: <b>'.$fleet_id.'</b>; Incomplete Move -> status 4: <b>'.$fleet['move_id'].' [Type: '.$fleet['action_code'].']</b>. Attempts repositioning');
+            $sdl->info('Ghost fleet: <b>'.$fleet_id.'</b>; Incomplete Move -> status 4: <b>'.$fleet['move_id'].' [Type: '.$fleet['action_code'].']</b>. Attempts repositioning');
             $RESET_FLEET = $fleet['start'];
         }
     }
@@ -2404,10 +2398,10 @@ while($fleet = $db->fetchrow($q_fleets)) {
                 WHERE fleet_id = '.$fleet_id;
 
         if(!$db->query($sql)) {
-            $sdl->log('<b>Error:</b> Could not reset fleets location data');
+            $sdl->error('Could not reset fleets location data');
         }
 
-        $sdl->log('Fleet <b>'.$fleet_id.'</b> becomes Planet <b>'.$RESET_FLEET.'</b> reset');
+        $sdl->info('Fleet <b>'.$fleet_id.'</b> becomes Planet <b>'.$RESET_FLEET.'</b> reset');
     }
 }
 
@@ -2415,7 +2409,7 @@ $sql = 'DELETE FROM ship_fleets
         WHERE n_ships = 0';
 
 if(!$db->query($sql)) {
-    $sdl->log('<b>Error:</b> Could not delete empty fleets');
+    $sdl->error('Could not delete empty fleets');
 }
 
 
@@ -2430,7 +2424,7 @@ $sdl->finish_job('Resolve ghost fleets');
 // Quit and close log
 
 $db->close();
-$sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
+$sdl->info('<b>Finished Scheduler in <font color=#009900>'.round((microtime(true))-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
 
 ?>
 

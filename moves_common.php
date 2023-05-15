@@ -21,17 +21,19 @@
 */
 
 // include game definitions, path url and so on
-include('config.script.php');
+include_once('config.script.php');
 
 // status codes for _action_main() and _main()
 define('MV_EXEC_OK', 1);
 define('MV_EXEC_ERROR', -1);
 
 // used for moves_common::log()
+define('MV_M_INFO', 0);
 define('MV_M_NOTICE', 1);
 define('MV_M_ERROR', 2);
 define('MV_M_DATABASE', 3);
 define('MV_M_CRITICAL', 4);
+define('MV_M_DEBUG', 5);
 
 // macros for the elements of the numerical arrays returned by combat system
 define('MV_CMB_WINNER', 0);
@@ -87,10 +89,8 @@ define('STL_MAX_ORBITAL', 120);
 
 function commonlog($message,$message2,$move_id=0)
 {
-    $fp = fopen(TICK_LOG_FILE, 'a');
-        fwrite($fp, $message." (move_id: <b>".$move_id."</b>) ".$message2."<br>\n");
-        echo str_replace('\n','<br>',$message." ".$message2."\n");
-        fclose($fp);
+	global $sdl;	
+	$sql->debug($message." (move_id: <b>".$move_id."</b>) ".$message2);
 }
 
 class moves_common {
@@ -149,26 +149,33 @@ class moves_common {
     function log($level, $message) {
         global $sdl;
 
-        switch($level) {
+        switch($level) {            
+			case MV_M_INFO:
+                $sdl->info('(move_id: '.$this->mid.') '.$message);
+				break;
             case MV_M_NOTICE:
-                $sdl->log('- Moves Notice: (move_id: '.$this->mid.') '.$message);
-            break;
+                $sdl->warn('(move_id: '.$this->mid.') '.$message);
+				break;
 
             case MV_M_ERROR:
-                $sdl->log('- Moves Error: (move_id: '.$this->mid.') '.$message);
-            break;
+                $sdl->error('Error: (move_id: '.$this->mid.') '.$message);
+				break;
 
             case MV_M_DATABASE:
-                $sdl->log('- Moves Database Error: (move_id: '.$this->mid.') '.$message.' - '.$this->db->error['message'].' - '.$this->db->error['sql']);
-            break;
+                $sdl->error('(move_id: '.$this->mid.') '.$message.' - '.$this->db->error['message'].' - '.$this->db->error['sql']);
+				break;
+			
             case MV_M_CRITICAL:
-                $sdl->log('- Moves CRITICAL: (move_id: '.$this->mid.') '.$message);
-            break;
+                $sdl->fatal('(move_id: '.$this->mid.') '.$message);
+				break;
+			
+            case MV_M_DEBUG:
+                $sdl->debug('(move_id: '.$this->mid.') '.$message);
+				break;
 
             default:
-                $sdl->log($level.': (move_id: '.$this->mid.') '.$message);
-            break;
-
+                $sdl->warn($level.': (move_id: '.$this->mid.') '.$message);
+				break;
         }
 
         return MV_EXEC_ERROR;
@@ -683,6 +690,7 @@ class moves_common {
 
         if(!empty($this->move['action_data'])) {
             $this->action_data = (array)unserialize($this->move['action_data']);
+			$this->log(MV_M_DEBUG, "action_data: " . print_r($this->action_data, true));
         }
 
         // #############################################################################
@@ -782,7 +790,7 @@ class moves_common {
             }
 
             $this->db->free_result($q_ar_uid);
-$this->log(MV_M_NOTICE,'AR-user(s): <b>'.count($ar_user).'</b>');
+			$this->log(MV_M_INFO,'AR-user(s): <b>'.count($ar_user).'</b>');
 
             for($i = 0; $i < count($ar_user); ++$i) {
                 $this->log(MV_M_NOTICE, 'Entering AR-loop #'.$i);
@@ -794,7 +802,7 @@ $this->log(MV_M_NOTICE,'AR-user(s): <b>'.count($ar_user).'</b>');
                               f.user_id = '.$ar_user[$i].' AND
                               f.alert_phase = '.ALERT_PHASE_RED;
 
-$this->log(MV_M_NOTICE,'AR-query:<br>"'.$sql.'"<br>');
+				$this->log(MV_M_DEBUG,'AR-query:<br>"'.$sql.'"<br>');
 
                 if(($atk_fleets = $this->db->queryrowset($sql)) === false) {
                     return $this->log(MV_M_DATABASE, 'Could not query attacker fleets in AR! SKIP');
@@ -1083,7 +1091,7 @@ $this->log(MV_M_NOTICE,'AY-user(s): <b>'.count($ay_user).'</b>');
                 $this->log(MV_M_DATABASE, 'Could not update move exec started data to keep move alive! CONTINUE');
             }
 
-            $this->log(MV_M_NOTICE, 'Action '.$this->move['action_code'].' executed in '.$total_processing_time.'s, but kept alive');
+            $this->log(MV_M_INFO, 'Action '.$this->move['action_code'].' executed in '.$total_processing_time.'s, but kept alive');
         }
         else {
             $sql = 'UPDATE scheduler_shipmovement
@@ -1094,7 +1102,7 @@ $this->log(MV_M_NOTICE,'AY-user(s): <b>'.count($ay_user).'</b>');
                 $this->log(MV_M_DATABASE, 'Could not update move status data! CONTINUE');
             }
 
-            $this->log(MV_M_NOTICE, 'Action '.$this->move['action_code'].' executed in '.$total_processing_time.'s');
+            $this->log(MV_M_INFO, 'Action '.$this->move['action_code'].' executed in '.$total_processing_time.'s');
         }
 
         return MV_EXEC_OK;

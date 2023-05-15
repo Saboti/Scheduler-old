@@ -26,45 +26,42 @@
 // Startup Konfig
 
 // include game definitions, path url and so on
-include('config.script.php');
+include_once('config.script.php');
 
-error_reporting(E_ALL);
 ini_set('memory_limit', '600M');
 
 if(!empty($_SERVER['SERVER_SOFTWARE'])) {
     echo 'The scheduler can only be called by CLI!'; exit;
 }
 
-define('TICK_LOG_FILE', $game_path . 'logs/moves_tick_'.date('d-m-Y', time()).'.log');
 define('IN_SCHEDULER', true); // wir sind im scheduler...
 
 // include commons classes and functions
-include('commons.php');
+include_once('commons.php');
 
 
 // ########################################################################################
 // ########################################################################################
 // Init
 
-$starttime = ( microtime() + time() );
+$starttime = ( microtime(true) );
 
-include($game_path . 'include/sql.php');
-include($game_path . 'include/global.php');
-include($game_path . 'include/functions.php');
-include($game_path . 'include/text_races.php');
-include($game_path . 'include/race_data.php');
-include($game_path . 'include/ship_data.php');
-include($game_path . 'include/libs/moves.php');
+include_once($game_path . 'include/sql.php');
+include_once($game_path . 'include/global.php');
+include_once($game_path . 'include/functions.php');
+include_once($game_path . 'include/text_races.php');
+include_once($game_path . 'include/race_data.php');
+include_once($game_path . 'include/ship_data.php');
+include_once($game_path . 'include/libs/moves.php');
 
-$sdl = new scheduler();
+$sdl = new scheduler("TICK-MOVES");
 $db = new sql($config['server'].":".$config['port'], $config['game_database'], $config['user'], $config['password']); // create sql-object for db-connection
 
 $game = new game();
 
-$sdl->log('<br><br><br><b>-------------------------------------------------------------</b><br>'.
-          '<b>Starting Scheduler at '.date('d.m.y H:i:s', time()).'</b>');
+$sdl->info('Starting Scheduler at '.date('d.m.y H:i:s', time()));
 if(($cfg_data = $db->queryrow('SELECT * FROM config')) === false) {
-    $sdl->log('- Fatal: Could not query tick data! ABORTED');
+    $sdl->fatal('Could not query tick data! ABORTED');
   exit;
 }
 $ACTUAL_TICK = $cfg_data['tick_id'];
@@ -73,12 +70,12 @@ $LAST_TICK_TIME = ($cfg_data['tick_time']-TICK_DURATION*60);
 $STARDATE = $cfg_data['stardate'];
 
 if($cfg_data['tick_stopped']) {
-    $sdl->log('Finished Scheduler in '.round((microtime()+time())-$starttime, 4).' secs<br>Tick has been stopped (Unlock in table "config")');
+    $sdl->info('Finished Scheduler in '.round((microtime(true))-$starttime, 4).' secs. Tick has been stopped (Unlock in table "config")');
     exit;
 }
 
 if(empty($ACTUAL_TICK)) {
-    $sdl->log('Finished Scheduler in '.round((microtime()+time())-$starttime, 4).' secs<br>- Fatal: empty($ACTUAL_TICK) == true');
+    $sdl->fatal('Finished Scheduler in '.round((microtime(true))-$starttime, 4).' secs. empty($ACTUAL_TICK) == true');
     exit;
 }
 
@@ -101,7 +98,6 @@ $sdl->finish_job('Mine Job'); // terminates the timer
 // Moves Scheduler
 $sdl->start_job('Moves Scheduler');
 include('moves_main.php');
-
 $sdl->finish_job('Moves Scheduler');
 
 
@@ -110,7 +106,7 @@ $sdl->finish_job('Moves Scheduler');
 // Quit and close log
 
 $db->close();
-$sdl->log('<b>Finished Scheduler in <font color=#009900>'.round((microtime()+time())-$starttime, 4).' secs</font><br>Executed Queries: <font color=#ff0000>'.$db->i_query.'</font></b>');
+$sdl->info('Finished Scheduler in '.round((microtime(true))-$starttime, 4).' secs. Executed Queries: '.$db->i_query);
 
 ?>
 

@@ -21,7 +21,7 @@
 */
 
 
-$sdl->log('entering file');
+$sdl->info('entering file');
 
 // backward
 if(!isset($CURRENT_TICK)) $CURRENT_TICK = $ACTUAL_TICK;
@@ -74,7 +74,7 @@ $sql = 'UPDATE scheduler_shipmovement
               move_finish <= '.$CURRENT_TICK;
 
 if(!$db->query($sql)) {
-    $sdl->log('- Moves Database Error: Could not update fake fleets data! CONTINUE');
+    $sdl->error('Could not update fake fleets data! CONTINUE');
 }
 
 
@@ -90,12 +90,12 @@ $sql = 'SELECT ss.*,
         ORDER BY ss.move_id ASC';
 
 if(!$q_moves = $db->query($sql)) {
-    $sdl->log('- Moves Database Error: Could not select main moves data! MOVES ABORTED');
+    $sdl->error('Could not select main moves data! MOVES ABORTED');
 
     return MV_EXEC_ERROR;
 }
 
-$sdl->log('- Moves: Starting process');
+$sdl->info('Starting process');
 
 
 while($cur_move = $db->fetchrow($q_moves)) {
@@ -112,7 +112,7 @@ while($cur_move = $db->fetchrow($q_moves)) {
 }
 
 
-$sdl->log('- Moves: Ending process');
+$sdl->info('- Moves: Ending process');
 
 
 ?>
