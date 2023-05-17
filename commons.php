@@ -292,7 +292,7 @@ class scheduler {
 	var $start_values = array();
 	var $db;
 	var $module;
-	var $job;
+	var $job = array();
 	
 	function __construct($module = ''){
 		global $config;
@@ -338,16 +338,18 @@ class scheduler {
 			$module = $this->module;
 		}
 		
-		$sql = "INSERT INTO log(message,level,module,job) VALUES ('$message', $level, '$module', '$this->job');";		
+		$job = implode('-', $this->job);
+		
+		$sql = "INSERT INTO log(message,level,module,job) VALUES ('$message', $level, '$module', '$job');";		
 		$this->db->query($sql);
 		
-		echo "$level -> $module -> $message";
+		echo "$level -> $module -> $job -> $message";
 		echo "<br>";
 	}
 
 	function start_job($name, $module = '') {
 		global $db;
-		$this->job = $name;
+		array_push($this->job, $name);
 		$this->log('Starting '.$name.' ...', LOG_LEVEL_JOB, $module);
 		$this->start_values[$name] = array( microtime(true) , $db->i_query );
 	}
@@ -355,8 +357,7 @@ class scheduler {
 	function finish_job($name, $module = '') {
 		global $db;
 		$this->log('Executed '.$name.' (queries: '.($db->i_query - $this->start_values[$name][1]).') in '.round( (microtime(true)) - $this->start_values[$name][0] , 4).' secs', LOG_LEVEL_JOB, $module);
-
-		$this->job = '';
+		array_pop($this->job);
 	}
 }
 
