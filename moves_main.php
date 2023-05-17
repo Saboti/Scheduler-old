@@ -29,7 +29,6 @@ if(!isset($CURRENT_TICK)) $CURRENT_TICK = $ACTUAL_TICK;
 include('moves_common.php');
 include('moves_combat.php');
 
-
 include('moves_action_11.php');
 include('moves_action_12.php');
 include('moves_action_13.php');
@@ -44,18 +43,15 @@ include('moves_action_26.php');
 include('moves_action_27.php');
 include('moves_action_28.php');
 
-
 include('moves_action_31.php');
 include('moves_action_32.php');
 include('moves_action_33.php');
 include('moves_action_34.php');
 
-
 include('moves_action_40.php');
 include('moves_action_41.php');
 include('moves_action_42.php');
 include('moves_action_46.php');
-;
 
 include('moves_action_51.php');
 include('moves_action_52.php');
@@ -91,7 +87,6 @@ $sql = 'SELECT ss.*,
 
 if(!$q_moves = $db->query($sql)) {
     $sdl->error('Could not select main moves data! MOVES ABORTED');
-
     return MV_EXEC_ERROR;
 }
 
@@ -100,15 +95,14 @@ $sdl->info('Starting process');
 
 while($cur_move = $db->fetchrow($q_moves)) {
     $action_class = 'moves_action_'.$cur_move['action_code'];
-
+	$sdl->start_job($action_class);
     //if ($cur_move['action_code']<50 && $cur_move['action_code']!=24  && $cur_move['action_code']!=25)
 //{
     $mv = new $action_class($db, $cur_move, $CURRENT_TICK);
-
     $mv->_main();
-
     $mv = null;
 //}
+	$sdl->finish_job(action_class);
 }
 
 

@@ -53,14 +53,11 @@ class moves_action_22 extends moves_common {
 
         $dest_planet = get_friendly_orbit_fleets($this->move['dest'], $this->dest['user_id'], $this->dest['user_alliance']);
 
-
         // #############################################################################
         // Spy()
-
         $spy_result = Spy($spy_fleet['sum_sensors'], $spy_fleet['sum_cloak'], $spy_fleet['n_ships'], $dest_planet['sum_sensors'], $this->dest['building_7'], $spy_fleet['scoutxp']);
 
         $log2_data = array();
-
 
         if($spy_result[0]) {
 
@@ -180,12 +177,8 @@ class moves_action_22 extends moves_common {
 
 
         return MV_EXEC_OK;
-
     }
-
 }
-
-
 
 ?>
 
