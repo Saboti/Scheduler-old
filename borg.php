@@ -1213,15 +1213,27 @@ class Borg extends NPC
 			$live_attack = $res0['live_attack'];
 
 			// Computing the target threat level!!!!
+			$sql = 'SELECT count(*) as class1_ships FROM ships LEFT JOIN ship_templates ON ships.template_id = ship_templates.id WHERE ship_class = 1 AND ships.user_id = '.$primary_target['user_id'];
+			$res0 = $this->db->queryrow($sql);	
+			$class1 = 0.01*$res0['class1_ships'];
+			
 			$sql = 'SELECT count(*) as class2_ships FROM ships LEFT JOIN ship_templates ON ships.template_id = ship_templates.id WHERE ship_class = 2 AND ships.user_id = '.$primary_target['user_id'];
 			$res1 = $this->db->queryrow($sql);
+			$class2 = 0.1*$res1['class2_ships'];
+			
 			$sql = 'SELECT count(*) as class3_ships FROM ships LEFT JOIN ship_templates ON ships.template_id = ship_templates.id WHERE ship_class = 3 AND ships.user_id = '.$primary_target['user_id'];
 			$res2 = $this->db->queryrow($sql);
+			$class3 = 0.3*$res2['class3_ships'];
+			
 			$sql = 'SELECT count(*) as prom_ships FROM ships WHERE template_id = '.$FUTURE_SHIP.' AND ships.user_id = '.$primary_target['user_id'];
 			$res3 = $this->db->queryrow($sql);
-                        $sql = 'SELECT count(*) as settlers FROM planets WHERE planet_owner = '.INDEPENDENT_USERID.' AND best_mood_user = '.$primary_target['user_id'];
-                        $res4 = $this->db->queryrow($sql);
-			$bad_factor = round((25*$primary_target['planets_taken'] + 0.1*$res1['class2_ships'] + 0.3*$res2['class3_ships'] + 0.5*$res4['settlers'] + 2.7*$res3['prom_ships'] + pow($primary_target['battle_win'],1.15)),3);
+			$sql = 'SELECT count(*) as settlers FROM planets WHERE planet_owner = '.INDEPENDENT_USERID.' AND best_mood_user = '.$primary_target['user_id'];
+			$res4 = $this->db->queryrow($sql);
+			$this->sdl->debug('USER '.$primary_target['user_id'].' got '.$class1 .' as class1 from '.$res0['class1_ships'].' ships');
+			$this->sdl->debug('USER '.$primary_target['user_id'].' got '.$class2.' as class2 from '.$res1['class2_ships'].' ships');
+			$this->sdl->debug('USER '.$primary_target['user_id'].' got '.$class3.' as class3 from '.$res2['class3_ships'].' ships');			
+			
+			$bad_factor = round((25*$primary_target['planets_taken'] + $class1 + $class2 + $class3 + 0.5*$res4['settlers'] + 2.7*$res3['prom_ships'] + pow($primary_target['battle_win'],1.15)),3);
 			$this->sdl->debug('USER '.$primary_target['user_id'].' got '.$bad_factor.' as bad_factor');
 
 			$good_factor = round((70*$primary_target['planets_back'] + 9*$primary_target['under_attack'] + pow($primary_target['battle_lost'],1.2)),3) ;
@@ -1296,7 +1308,7 @@ class Borg extends NPC
 				$max_attack = 0;
 			}
 
-			$this->sdl->debug('USER '.$primary_target['user_id'].' has '.$live_attack.' live attacks at the moment');
+			$this->sdl->info('USER '.$primary_target['user_id'].' has '.$live_attack.' live attacks at the moment');
 			
 			// Attacking Sequence starts here!
 			while(($attack_fleet_data = $this->db->fetchrow($attack_fleet_query)) && ($live_attack < $max_attack))
@@ -1342,7 +1354,7 @@ class Borg extends NPC
 
 			$sql = 'UPDATE borg_target SET threat_level = '.$threat_level.', last_check = '.$ACTUAL_TICK.', under_attack = '.$attack_count.' WHERE user_id = '.$primary_target['user_id'];
 			$this->db->query($sql);
-			$this->sdl->debug('USER '.$primary_target['user_id'].' got '.$threat_level.' as threat_level');
+			$this->sdl->info('USER '.$primary_target['user_id'].' got '.$threat_level.' as threat_level');
 		}
 
 		$this->sdl->finish_job('PLAYERS Assimilation Program - BETA -');
