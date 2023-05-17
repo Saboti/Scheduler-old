@@ -102,7 +102,7 @@ while($cur_move = $db->fetchrow($q_moves)) {
     $mv->_main();
     $mv = null;
 //}
-	$sdl->finish_job(action_class);
+	$sdl->finish_job($action_class);
 }
 
 
