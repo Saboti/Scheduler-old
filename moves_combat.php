@@ -1007,147 +1007,99 @@ return $planet;
 function Spy($spy_sensor,$spy_cloak,$spy_ships,$planet_sensor,$spacedock_lvl, $scoutxp)
 {
 
-$cloak=(($spy_sensor/$spy_ships)*5+($spy_cloak/$spy_ships)*125)*10;
-
-$sensor=$planet_sensor+($spacedock_lvl+1)*200; // 2000 is max. planet-standard
-
-
-
-if ($cloak<=0) $cloak=1;
-
-if ($sensor<=0) $sensor=1;
-
-
-
-$chance_identify=round(100*($sensor/$cloak));
-
-$threshold = 76 - pow($scoutxp, 0.65);
-
-if ($chance_identify < 5) $chance_identify = 5;
-
-if ($chance_identify > $threshold) $chance_identify = $threshold;	
-
-$rval=rand(0,100);
-
-$identified=0;
-
-if ($rval<$chance_identify) $identified=1;
-
-
-
-$sensor_chance=$spy_sensor/(8+3*$identified);
-
-if ($sensor_chance>90) $sensor_chance=90;
-
-if ($sensor_chance<5) $sensor_chance=5;
-
-
-
-
-
-$id_res=array();
-
-$id_unit=array();
-
-$id_build=array();
-
-$id_tech1=array();
-
-$id_tech2=array();
-
-
-
-// identify resources:
-
-for ($t=0; $t<4; $t++)
-
-{
-
-$id=0;
-
-$rval=rand(0,100);
-
-if ($rval<=$sensor_chance) $id=1;
-
-if ($id) $id_res[]=$t;
-
-}
-
-
-
-// identify units:
-
-for ($t=0; $t<6; $t++)
-
-{
-
-$id=0;
-
-$rval=rand(0,100);
-
-if ($rval<=$sensor_chance) $id=1;
-
-if ($id) $id_unit[]=$t;
-
-}
-
-
-
-// identify buildings:
-
-for ($t=0; $t<12; $t++)
-
-{
-
-$id=0;
-
-$rval=rand(0,100);
-
-if ($rval<=$sensor_chance) $id=1;
-
-if ($id) $id_build[]=$t;
-
-}
-
-
-
-// identify tech1 = local research:
-
-for ($t=0; $t<5; $t++)
-
-{
-
-$id=0;
-
-$rval=rand(0,100);
-
-if ($rval<=$sensor_chance) $id=1;
-
-if ($id) $id_tech1[]=$t;
-
-}
-
-
-
-// identify tech2 = catresearch:
-
-for ($t=0; $t<5; $t++)
-
-{
-
-$id=0;
-
-$rval=rand(0,100);
-
-if ($rval<=$sensor_chance) $id=1;
-
-if ($id) $id_tech2[]=$t;
-
-}
-
-	
-
-return (array(0=>$identified,1=>$id_res,2=>$id_unit,3=>$id_build,4=>$id_tech1,5=>$id_tech2));	
-
+	$cloak=(($spy_sensor/$spy_ships)*5+($spy_cloak/$spy_ships)*125)*10;
+	$sensor=$planet_sensor+($spacedock_lvl+1)*200; // 2000 is max. planet-standard
+
+	if ($cloak<=0)
+	{ 
+		$cloak=1;
+	}
+
+	if ($sensor<=0)
+	{
+		$sensor=1;
+	}
+
+	$chance_identify=round(100*($sensor/$cloak));
+
+	$threshold = 76 - pow($scoutxp, 0.65);
+
+	if ($chance_identify < 5) 
+	{		
+		$chance_identify = 5;
+	}
+
+	if ($chance_identify > $threshold) 
+	{	
+		$chance_identify = $threshold;	
+	}
+
+	$rval=rand(0,100);
+
+	$identified=0;
+
+	if ($rval<$chance_identify) 
+	{
+		$identified=1;
+	}
+
+	$sensor_chance=$spy_sensor/(8+3*$identified);
+
+	if ($sensor_chance>90) $sensor_chance=90;
+
+	if ($sensor_chance<5) $sensor_chance=5;
+
+	$id_res=array();
+	$id_unit=array();
+	$id_build=array();
+	$id_tech1=array();
+	$id_tech2=array();
+
+	// identify resources:
+	for ($t=0; $t<4; $t++)
+	{
+		$id=0;
+		$rval=rand(0,100);
+		if ($rval<=$sensor_chance) $id=1;
+		if ($id) $id_res[]=$t;
+	}
+
+	// identify units:
+	for ($t=0; $t<6; $t++)
+	{
+		$id=0;
+		$rval=rand(0,100);
+		if ($rval<=$sensor_chance) $id=1;
+		if ($id) $id_unit[]=$t;
+	}
+
+	// identify buildings:
+	for ($t=0; $t<12; $t++)
+	{
+		$id=0;
+		$rval=rand(0,100);
+		if ($rval<=$sensor_chance) $id=1;
+		if ($id) $id_build[]=$t;
+	}
+
+	// identify tech1 = local research:
+	for ($t=0; $t<5; $t++)
+	{
+		$id=0;
+		$rval=rand(0,100);
+		if ($rval<=$sensor_chance) $id=1;
+		if ($id) $id_tech1[]=$t;
+	}
+
+	// identify tech2 = catresearch:
+	for ($t=0; $t<5; $t++)
+	{
+		$id=0;
+		$rval=rand(0,100);
+		if ($rval<=$sensor_chance) $id=1;
+		if ($id) $id_tech2[]=$t;
+	}
+
+	return (array(0=>$identified,1=>$id_res,2=>$id_unit,3=>$id_build,4=>$id_tech1,5=>$id_tech2));	
 }
 
