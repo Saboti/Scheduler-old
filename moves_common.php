@@ -197,7 +197,7 @@ class moves_common {
     }
 
     function deactivate($to_status) {
-        $sql = 'UPDATE ship_fleets
+		$sql = 'UPDATE ship_fleets
                 SET planet_id = '.$this->move['start'].',
                     move_id = 0
                 WHERE move_id = '.$this->mid;
@@ -214,7 +214,7 @@ class moves_common {
             $this->log(MV_M_DATABASE, 'Could not update move status data to deactivation status '.$to_status.'! CONTINUE');
         }
 
-        $this->log(MV_M_NOTICE, 'Deactivate move to status '.$to_status);
+        $this->log(MV_M_ERROR, 'Deactivate move to status '.$to_status);
     }
 
     function get_combat_query_fleet_columns() {
@@ -588,11 +588,21 @@ class moves_common {
 
         $cmd_line = MV_COMBAT_BIN_PATH.' '.$atk_fleet_ids_str.' '.$dfd_fleet_ids_str.' '.$this->move['dest'].' '.$n_large_orbital_defense.' '.$n_small_orbital_defense;
         $auth_line = ' '.$config['game_database'].' '.$config['user'].' '.$config['password'];
-        exec($cmd_line.$auth_line, $bin_output);
+        		
+		$this->log(MV_M_DEBUG, 'Combat call: ' . $cmd_line.$auth_line);
+				
+		if(exec($cmd_line.$auth_line, $bin_output) === false)
+		{			
+			$this->log(MV_M_ERROR, 'Combat Binary exited with an error ('.substr($bin_output[0], 1).' - '.$cmd_line.')');
+            return MV_EXEC_ERROR;
+		}
 
         if($bin_output[0][0] == '0') {
-            return $this->log(MV_M_ERROR, 'Combat Binary exited with an error ('.substr($bin_output[0], 1).' - '.$cmd_line.')');
+			$this->log(MV_M_ERROR, 'Combat Binary exited with an error ('.substr($bin_output[0], 1).' - '.$cmd_line.')');
+            return MV_EXEC_ERROR;
         }
+		
+		$this->log(MV_M_DEBUG, 'Combat result: ' . print_r($bin_output, true));
 
         $this->cmb[MV_CMB_WINNER] = $bin_output[1];
         $this->cmb[MV_CMB_KILLS_PLANETARY] = (int)$bin_output[2];
