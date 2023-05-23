@@ -337,6 +337,9 @@ class scheduler {
 		{
 			$module = $this->module;
 		}
+		$this->db->connect();
+		$message = addslashes($message);
+		$message = $this->db->escape_string($message);
 		
 		$job = implode('-', $this->job);
 		
