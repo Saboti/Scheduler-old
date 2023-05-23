@@ -1638,7 +1638,7 @@ class Ferengi extends NPC
 
     function graph_draw($kind)
     {
-        global $ACTUAL_TICK;
+        global $ACTUAL_TICK, $sdl;
 
         // At the moment the query read ALL the troops traded since the game started...
         // I believe we can do better then this...
@@ -1696,10 +1696,23 @@ class Ferengi extends NPC
 
         // Plot only the last seven four hours frames
         $count_a=$count_a-7;
+		$sdl->debug('$arr data: ' . print_r($arr,true));
         for($aa=0;$aa<7;$aa++)
         {
-            $output[$aa]['size']=$arr[$count_a]['size'];
-            $output[$aa]['name']=$arr[$count_a]['name'];
+			if(isset($arr))
+			{
+				if(isset($arr[$count_a]))
+				{
+					if(isset($arr[$count_a]['size']))
+					{		
+						$output[$aa]['size']=$arr[$count_a]['size'];
+					}
+					if(isset($arr[$count_a]['name']))
+					{
+						$output[$aa]['name']=$arr[$count_a]['name'];
+					}
+				}
+			}
             $count_a++;
         }
 
