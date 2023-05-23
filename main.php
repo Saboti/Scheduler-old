@@ -903,7 +903,7 @@ while($planet = $db->fetchrow($q_planets)) {
         if ($chance>80) array_push($victim,3);
         if ($chance>90) array_push($victim,0);
 
-        $rand_building=rand(0,count($victim)-1);
+        $rand_building=rand(1,count($victim)-1);
         $sdl->info('Building:'.count($victim).' of 12, randomly chosen:'.$rand_building.'<br>');
         if ($planet['building_'.$rand_building]>1)
         {
