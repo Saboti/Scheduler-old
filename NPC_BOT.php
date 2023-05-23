@@ -109,7 +109,11 @@ class NPC
 				// Recover language of the sender
 				$sql = 'SELECT language FROM user WHERE user_id='.$message['sender'];
 				if(!($language = $this->db->queryrow($sql)))
+				{					
 					$this->sdl->error('<b>Error:</b> Cannot read user language!');
+					$language['language'] = 'GER';
+				}
+				
 
 				switch($language['language'])
 				{
@@ -186,7 +190,7 @@ class NPC
 		// No planet? Assume Bot's one
 		if($planet_id == 0) $planet_id = $this->bot['planet_id'];
 
-		$this->sdl->log('Check fleet "'.$name.'" composition', TICK_LOG_FILE_NPC);
+		$this->sdl->debug('Check fleet "'.$name.'" composition');
 		$query='SELECT fleet_id FROM `ship_fleets` WHERE fleet_name="'.$name.'" AND user_id='.$this->bot['user_id'].' LIMIT 0, 1';
 		$q_fleet = $this->db->query($query);
 		if($this->db->num_rows()<=0)
@@ -194,16 +198,16 @@ class NPC
 			$sql = 'INSERT INTO ship_fleets (fleet_name, user_id, planet_id, move_id, n_ships)
 				VALUES ("'.$name.'", '.$this->bot['user_id'].', '.$planet_id.', 0, '.$num.')';
 			if(!$this->db->query($sql))
-				$this->sdl->log('<b>Error:</b> Could not insert new fleet data', TICK_LOG_FILE_NPC);
+				$this->sdl->error('CreateFleet-Could not insert new fleet data');
 			$fleet_id = $this->db->insert_id();
 
-			if(!$fleet_id) $this->sdl->log('Error - '.$fleet_id.' = empty', TICK_LOG_FILE_NPC);
+			if(!$fleet_id) $this->sdl->error($fleet_id.' = empty');
 
 			$sql= 'SELECT max_unit_1, max_unit_2, max_unit_3, max_unit_4, rof, max_torp,
 			              value_5, value_9
 			       FROM `ship_templates` WHERE `id` = '.$template;
 			if(($stpl = $this->db->queryrow($sql)) === false)
-				$this->sdl->log('<b>Error:</b> Could not query ship template data - '.$sql, TICK_LOG_FILE_NPC);
+				$this->sdl->error('CreateFleet: Could not query ship template data - '.$sql);
 
 			$sql= 'INSERT INTO ships (fleet_id, user_id, template_id, experience, hitpoints, construction_time,
 			                          rof, torp, unit_1, unit_2, unit_3, unit_4)
@@ -214,10 +218,10 @@ class NPC
 			for($i = 0; $i < $num; ++$i)
 			{
 				if(!$this->db->query($sql)) {
-					$this->sdl->log('<b>Error:</b> Could not insert new ships #'.$i.' data', TICK_LOG_FILE_NPC);
+					$this->sdl->error('CreateFleet: Could not insert new ships #'.$i.' data');
 				}
 			}
-			$this->sdl->log('Fleet: '.$fleet_id.' - '.$num.' ships created', TICK_LOG_FILE_NPC);
+			$this->sdl->info('Fleet: '.$fleet_id.' - '.$num.' ships created');
 		}
 		else {
 			$fleet = $this->db->fetchrow($q_fleet);
