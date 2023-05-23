@@ -1212,15 +1212,24 @@ $sql = 'UPDATE planets
                             POW(research_2, '.$POINTS_EXP.') +
                             POW(research_3, '.$POINTS_EXP.') +
                             POW(research_4, '.$POINTS_EXP.') +
-                            POW(research_5, '.$POINTS_EXP.'),
-            resource_1 = resource_1 + add_1,
-            resource_2 = resource_2 + add_2,
-            resource_3 = resource_3 + add_3,
-            resource_4 = resource_4 + add_4
+                            POW(research_5, '.$POINTS_EXP.')
         WHERE planet_owner <> 0';
 
 if(!$db->query($sql)) {
-    $sdl->error('Could not update planet points and resources! - CONTINUED');
+    $sdl->error('Could not update planet points! - CONTINUED');
+}
+
+// Update ressources with enough troops.
+$sql = 'UPDATE planets
+        SET resource_1 = resource_1 + add_1,
+            resource_2 = resource_2 + add_2,
+            resource_3 = resource_3 + add_3,
+            resource_4 = resource_4 + add_4
+        WHERE planet_owner <> 0 AND 
+		      min_security_troops <= unit_1*2+unit_2*3+unit_3*4+unit_4*4';
+		
+if(!$db->query($sql)) {
+    $sdl->error('Could not update planet points! - CONTINUED');
 }
 
 $n_planets = $db->affected_rows();
@@ -1232,11 +1241,14 @@ $sql = 'UPDATE planets p,user u, alliance a
         WHERE p.planet_owner <> 0 AND
               u.user_id = p.planet_owner AND
               a.alliance_id = u.user_alliance AND
-              a.taxes > 0';
+              a.taxes > 0 AND 
+			  min_security_troops <= unit_1*2+unit_2*3+unit_3*4+unit_4*4';
 
 if(!$db->query($sql)) {
     $sdl->error('Could not update planets tax data! - CONTINUED');
 }
+
+// Update ressources without enough troops.
 
 // AC: 07/01/15 - Avoid reducing resources on unhabitated planets, since
 //                for some reasons min_security_troops could not be zero
@@ -1244,15 +1256,31 @@ if(!$db->query($sql)) {
 //                negative values.
 // Another great optimization by Daywalker ^^
 $sql = 'UPDATE planets
-        SET resource_1 = resource_1 - add_1 + add_1 * (1 / min_security_troops * (unit_1*2+unit_2*3+unit_3*4+unit_4*4)),
-            resource_2 = resource_2 - add_2 + add_2 * (1 / min_security_troops * (unit_1*2+unit_2*3+unit_3*4+unit_4*4)),
-            resource_3 = resource_3 - add_3 + add_3 * (1 / min_security_troops * (unit_1*2+unit_2*3+unit_3*4+unit_4*4))
+        SET resource_1 = resource_1 + add_1 * (1 / min_security_troops * (unit_1*2+unit_2*3+unit_3*4+unit_4*4)),
+            resource_2 = resource_2 + add_2 * (1 / min_security_troops * (unit_1*2+unit_2*3+unit_3*4+unit_4*4)),
+            resource_3 = resource_3 + add_3 * (1 / min_security_troops * (unit_1*2+unit_2*3+unit_3*4+unit_4*4))
         WHERE planet_owner <> 0 AND min_security_troops > unit_1*2+unit_2*3+unit_3*4+unit_4*4';
-
+		
 if(!$db->query($sql)) {
     $sdl->warn('Could not update planets resource-diff-troops data! - CONTINUED');
 }
 
+$n_planets += $db->affected_rows();
+
+$sql = 'UPDATE planets p,user u, alliance a
+        SET p.resource_1 = p.resource_1 - (p.add_1 * (1 / p.min_security_troops * (p.unit_1*2+p.unit_2*3+p.unit_3*4+p.unit_4*4))) / 100 * a.taxes,
+            p.resource_2 = p.resource_2 - (p.add_2 * (1 / p.min_security_troops * (p.unit_1*2+p.unit_2*3+p.unit_3*4+p.unit_4*4))) / 100 * a.taxes,
+            p.resource_3 = p.resource_3 - (p.add_3 * (1 / p.min_security_troops * (p.unit_1*2+p.unit_2*3+p.unit_3*4+p.unit_4*4))) / 100 * a.taxes
+        WHERE p.planet_owner <> 0 AND
+              u.user_id = p.planet_owner AND
+              a.alliance_id = u.user_alliance AND
+              a.taxes > 0 AND min_security_troops > unit_1*2+unit_2*3+unit_3*4+unit_4*4';
+
+if(!$db->query($sql)) {
+    $sdl->error('Could not update planets tax data! - CONTINUED');
+}
+
+// Handle overressources
 $sql = 'UPDATE planets
         SET resource_1 = max_resources
         WHERE planet_owner <> 0 AND
@@ -1382,6 +1410,8 @@ if(!$db->query($sql)) {
     $sdl->warn('Could not update planet attacked data! CONTINUED');
 }
 */
+
+$sdl->info('Planets updated: ' . $n_planets);
 
 $sdl->finish_job('Update Planets');
 
